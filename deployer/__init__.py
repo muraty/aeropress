@@ -1,11 +1,11 @@
 import os
-import argparse
+import yaml
 import logging
+import argparse
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 from collections import defaultdict
 
-import yaml
 
 from deployer import service, task
 
