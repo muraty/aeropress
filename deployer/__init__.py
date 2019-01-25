@@ -45,8 +45,11 @@ def _load_config(root_path: Path, image_url: str) -> Dict:
     return config
 
 
-def deploy(path: Path, image_url: str) -> None:
-    config = _load_config(path, image_url)
+def deploy(path: str, image_url: str) -> None:
+    # Create Path object
+    config_path = Path(path)
+
+    config = _load_config(config_path, image_url)
 
     # Register task definitions.
     task.register_all(config['tasks'])
@@ -68,10 +71,7 @@ def main() -> None:
     # region_name param
     # Clean stale tasks param
 
-    # Create Path object
-    path = Path(args.path)
-
-    deploy(path, args.image_url)
+    deploy(args.path, args.image_url)
 
 
 if __name__ == '__main__':
