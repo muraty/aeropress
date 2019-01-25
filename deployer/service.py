@@ -1,12 +1,9 @@
-import logging
-
 import boto3
 
 from deployer.metric import create_metrics
 from deployer.alarm import create_scaling_alarms
 from deployer.scale import create_scaling_policies, register_scalable_targets
-
-logger = logging.getLogger(__name__)
+from deployer import logger
 
 ecs_client = boto3.client('ecs', region_name='eu-west-1')
 

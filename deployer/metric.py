@@ -1,9 +1,8 @@
-import logging
 from datetime import datetime
 
 import boto3
 
-logger = logging.getLogger(__name__)
+from deployer import logger
 
 cloudwatch_client = boto3.client('cloudwatch', region_name='eu-west-1')
 

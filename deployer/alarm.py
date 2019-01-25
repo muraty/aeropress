@@ -1,12 +1,11 @@
 import os
-import logging
 from typing import List, Dict, Any  # noqa
 
 import boto3
 
 from deployer.scale import get_existing_scaling_policies
+from deployer import logger
 
-logger = logging.getLogger(__name__)
 cloudwatch_client = boto3.client('cloudwatch', region_name='eu-west-1')
 
 

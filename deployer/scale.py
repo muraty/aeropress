@@ -1,9 +1,8 @@
-import logging
 from typing import List, Dict, Any  # noqa
 
 import boto3
 
-logger = logging.getLogger(__name__)
+from deployer import logger
 
 scaling_client = boto3.client('application-autoscaling', region_name='eu-west-1')
 
