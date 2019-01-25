@@ -1,0 +1,81 @@
+service:
+  serviceName: service-foo
+  cluster: cluster-foo
+  taskDefinition: task-foo
+  desiredCount: 1
+  launchType: EC2
+  schedulingStrategy: REPLICA
+  deploymentController:
+    type: ECS
+  metric:
+    Id: metric-foo
+    MetricStat:
+      Metric:
+        Namespace: namespace_foo
+        MetricName: fo
+      Period: 60
+      Unit: Count
+      Stat: Average
+  alarm:
+    AlarmName: "ecs:alarm-foo something > 100"
+    AlarmDescription: something bigger than 100
+    OKActions:
+      - PolicyScaleDown
+    AlarmActions:
+      - PolicyScaleUp
+    EvaluationPeriods: 1
+    DataPointsToAlarm: 1
+    Threshold: 100
+    ComparisonOperator: GreaterThanOrEqualToThreshold
+    TreatMissingData: missing
+  scale:
+    MinCapacity: 1
+    MaxCapacity: 10
+    policies:
+      - PolicyName: PolicyScaleUp
+        PolicyType: StepScaling
+        ScalableDimension: ecs:service:DesiredCount
+        StepScalingPolicyConfiguration:
+          AdjustmentType: ChangeInCapacity
+          Cooldown: 60
+          StepAdjustments:
+            - MetricIntervalLowerBound: 0
+              MetricIntervalUpperBound: 100
+              ScalingAdjustment: 1
+            - MetricIntervalLowerBound: 100
+              MetricIntervalUpperBound: 400
+              ScalingAdjustment: 2
+            - MetricIntervalLowerBound: 400
+              MetricIntervalUpperBound: 900
+              ScalingAdjustment: 4
+            - MetricIntervalLowerBound: 900
+              ScalingAdjustment: 8
+      - PolicyName: PolicyScaleDown
+        PolicyType: StepScaling
+        ScalableDimension: ecs:service:DesiredCount
+        StepScalingPolicyConfiguration:
+          AdjustmentType: ExactCapacity
+          Cooldown: 60
+          StepAdjustments:
+              - MetricIntervalLowerBound: 0
+                ScalingAdjustment: 1
+
+task:
+  family: task-foo
+  networkMode: bridge
+  taskRoleArn: ecsTaskExecutionRole
+  executionRoleArn: ecsTaskExecutionRole
+  requiresCompatibilities:
+    - EC2
+  containerDefinitions:
+    - name: container-foo
+      logConfiguration:
+        logDriver: awslogs
+        options:
+          awslogs-group: "/ecs/task-foo"
+          awslogs-region: eu-west-1
+          awslogs-stream-prefix: ecs
+      memoryReservation: 128
+      entryPoint:
+        - "python"
+        - "--version"
