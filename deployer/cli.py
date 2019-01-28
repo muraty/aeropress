@@ -6,7 +6,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
-from deployer import task, service
+from deployer.aws import task, service
 from deployer import logger
 
 
