@@ -2,7 +2,7 @@ import logging
 
 from deployer import logger
 
-FORMAT = "[%(asctime)s] Thread(%(threadName)s) %(levelname)s %(name)s:%(funcName)s:%(lineno)s - %(message)s"
+FORMAT = "[%(asctime)s %(levelname)s %(name)s - %(message)s"
 
 
 def setup_logging(level: str) -> None:
