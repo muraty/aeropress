@@ -6,12 +6,13 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
-from deployer.aws import task, service
 from deployer import logger
+from deployer.aws import task, service
+from deployer._version import __version__
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='ECS deployer')
+    parser = argparse.ArgumentParser(description='aeropress AWS ECS deployment helper')
     parser.add_argument('path', type=str, help='Config path that includes service definitions.')
     parser.add_argument('image_url', type=str, help='Image URL for docker image.')
     parser.add_argument('--logging-level',
@@ -19,6 +20,8 @@ def main() -> None:
                         choices=['debug', 'info', 'warning', 'error'],
                         type=str.lower,
                         help='Print debug logs')
+    parser.add_argument('--version', action='version',
+                        version='{version}'.format(version=__version__))
 
     args = parser.parse_args()
 
