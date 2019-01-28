@@ -1,6 +1,6 @@
 import boto3
 
-from deployer import logger
+from aeropress import logger
 
 logs_client = boto3.client('logs', region_name='eu-west-1')
 

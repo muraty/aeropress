@@ -1,9 +1,9 @@
 import boto3
 
-from deployer.aws.metric import create_metrics
-from deployer.aws.alarm import create_scaling_alarms
-from deployer.aws.scale import create_scaling_policies, register_scalable_targets
-from deployer import logger
+from aeropress.aws.metric import create_metrics
+from aeropress.aws.alarm import create_scaling_alarms
+from aeropress.aws.scale import create_scaling_policies, register_scalable_targets
+from aeropress import logger
 
 ecs_client = boto3.client('ecs', region_name='eu-west-1')
 

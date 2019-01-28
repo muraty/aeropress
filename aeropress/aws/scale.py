@@ -2,7 +2,7 @@ from typing import List, Dict, Any  # noqa
 
 import boto3
 
-from deployer import logger
+from aeropress import logger
 
 scaling_client = boto3.client('application-autoscaling', region_name='eu-west-1')
 

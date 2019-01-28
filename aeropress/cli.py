@@ -6,9 +6,9 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
-from deployer import logger
-from deployer.aws import task, service
-from deployer._version import __version__
+from aeropress import logger
+from aeropress.aws import task, service
+from aeropress._version import __version__
 
 
 def main() -> None:

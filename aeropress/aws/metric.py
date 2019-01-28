@@ -2,7 +2,7 @@ from datetime import datetime
 
 import boto3
 
-from deployer import logger
+from aeropress import logger
 
 cloudwatch_client = boto3.client('cloudwatch', region_name='eu-west-1')
 

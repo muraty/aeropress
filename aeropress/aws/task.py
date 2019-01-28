@@ -2,8 +2,8 @@ import os
 
 import boto3
 
-from deployer.aws.log import get_existing_log_group_names, create_missing_log_groups, clean_stale_log_groups
-from deployer import logger
+from aeropress.aws.log import get_existing_log_group_names, create_missing_log_groups, clean_stale_log_groups
+from aeropress import logger
 
 ecs_client = boto3.client('ecs', region_name='eu-west-1')
 

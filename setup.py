@@ -7,7 +7,7 @@ README = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 
 setup(
     name='aeropress',
-    version=open("deployer/_version.py").readlines()[-1].split()[-1].strip("\"'"),
+    version=open("aeropress/_version.py").readlines()[-1].split()[-1].strip("\"'"),
     packages=find_packages(),
     python_requires='>=3.5.2',
     install_requires=[
@@ -17,13 +17,13 @@ setup(
     license='BSD License',
     description='Helper for deploying Docker images to AWS ECS.',
     long_description=README,
-    keywords='aws ecs deploy deployer docker image container containerization',
+    keywords='aws ecs deploy aeropress docker image container containerization',
     url='https://github.com/muraty/aeropress',
     author='Omer Murat Yildirim',
     author_email='omermuratyildirim@gmail.com',
     entry_points={
         'console_scripts': [
-            'aeropress = deployer.cli:main',
+            'aeropress = aeropress.cli:main',
         ]
     }
 )

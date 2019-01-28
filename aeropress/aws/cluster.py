@@ -1,6 +1,6 @@
 import boto3
 
-from deployer import logger
+from aeropress import logger
 
 ecs_client = boto3.client('ecs', region_name='eu-west-1')
 
