@@ -34,6 +34,11 @@ def main() -> None:
     config_path = Path(args.path)
     config_dict = _load_config(config_path, args.image_url)
 
+    # Validate definitions
+    if not _is_valid_config(config_dict):
+        logger.error('Config is not valid!')
+        os._exit(1)
+
     logger.info("Deploying the image '%s' from path: %s", args.image_url, args.path)
     deploy(config_dict)
 
@@ -69,6 +74,18 @@ def _load_config(root_path: Path, image_url: str) -> Dict:
         logger.info('No config file is found!')
 
     return config
+
+
+# TODO: Add more check.
+def _is_valid_config(config: dict) -> bool:
+    task_definitions = [task_dict['family'] for task_dict in config['tasks']]
+
+    for service_dict in config['services']:
+        if service_dict['taskDefinition'] not in task_definitions:
+            logger.info('Task definition %s is not found!', service_dict['taskDefinition'])
+            return False
+
+    return True
 
 
 def deploy(config_dict: dict) -> None:
