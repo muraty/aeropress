@@ -11,10 +11,7 @@ setup(
     packages=find_packages(),
     python_requires='>=3.5.2',
     install_requires=[
-        'boto3==1.9.62',
-        'mypy==0.550',
-        'flake8==3.6.0',
-        'PyYAML==3.13',
+        'boto3>=1.9',
     ],
     include_package_data=True,
     license='BSD License',
