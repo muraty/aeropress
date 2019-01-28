@@ -1,8 +1,6 @@
-import logging
-
 import boto3
 
-logger = logging.getLogger(__name__)
+from deployer import logger
 
 logs_client = boto3.client('logs', region_name='eu-west-1')
 

@@ -1,11 +1,11 @@
 import os
 import yaml
+import logging
 import argparse
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
-from deployer.logging import setup_logging
 from deployer import task, service
 from deployer import logger
 
@@ -96,6 +96,16 @@ def deploy(config_dict: dict) -> None:
 
     # Update all services (Create if not exists.)
     service.update_all(config_dict['services'])
+
+
+def setup_logging(level: str) -> None:
+    FORMAT = "[%(asctime)s %(levelname)s %(name)s - %(message)s"
+    level = getattr(logging, level.upper())
+    h = logging.StreamHandler()
+    h.setLevel(level)
+    h.setFormatter(logging.Formatter(FORMAT))
+    logger.setLevel(level)
+    logger.addHandler(h)
 
 
 if __name__ == '__main__':
