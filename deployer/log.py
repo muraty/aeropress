@@ -10,13 +10,17 @@ logs_client = boto3.client('logs', region_name='eu-west-1')
 def create_missing_log_groups(missing_log_group_names: set) -> None:
     for missing_log_group_name in missing_log_group_names:
         response = logs_client.create_log_group(logGroupName=missing_log_group_name)
-        logger.info('Created log group: %s', response)
+
+        logger.info('Created log group: %s', missing_log_group_name)
+        logger.debug('Created log group details: %s', response)
 
 
 def clean_stale_log_groups(stale_log_group_names: set) -> None:
     for stale_log_group_name in stale_log_group_names:
         response = logs_client.delete_log_group(logGroupName=stale_log_group_name)
-        logger.info('Clean stale log group: %s', response)
+
+        logger.info('Clean stale log group: %s', stale_log_group_name)
+        logger.debug('Clean stale log group details: %s', response)
 
 
 def get_existing_log_group_names() -> set:

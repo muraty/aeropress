@@ -53,7 +53,8 @@ def _register_task_definitions(tasks: list) -> None:
             requiresCompatibilities=task_dict['requiresCompatibilities'],
         )
 
-        logger.info('Created task definition: %s', response)
+        logger.info('Created task definition: %s', task_dict['family'])
+        logger.debug('Created task definition details: %s', response)
 
 
 def _validate_log_definitions(tasks: list) -> None:

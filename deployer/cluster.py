@@ -10,7 +10,8 @@ def create(cluster_name: str) -> None:
         clusterName=cluster_name,
     )
 
-    logger.info('Response: %s', response)
+    logger.info('Created cluster %s', cluster_name)
+    logger.debug('Created cluster details: %s', response)
 
 
 def describe(cluster: str) -> list:

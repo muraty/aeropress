@@ -71,7 +71,7 @@ def _load_config(root_path: Path, image_url: str) -> Dict:
 
                 config[parent_key].append(data)
     else:
-        logger.info('No config file is found!')
+        logger.error('No config file is found!')
 
     return config
 
@@ -82,7 +82,7 @@ def _is_valid_config(config: dict) -> bool:
 
     for service_dict in config['services']:
         if service_dict['taskDefinition'] not in task_definitions:
-            logger.info('Task definition %s is not found!', service_dict['taskDefinition'])
+            logger.error('Task definition %s is not found!', service_dict['taskDefinition'])
             return False
 
     return True

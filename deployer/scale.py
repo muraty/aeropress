@@ -55,7 +55,8 @@ def _create_or_update_all_policies(services: list, existing_policies: list) -> N
                     ScalableDimension=policy_dict['ScalableDimension'],
                     StepScalingPolicyConfiguration=policy_dict['StepScalingPolicyConfiguration'],
             )
-            logger.info('Created scaling policy: %s', response)
+            logger.info('Crated scaling policy: %s', policy_dict['PolicyName'])
+            logger.debug('Created scaling policy details: %s', response)
 
 
 def _is_stale_policy(existing_policy_dict: dict, services: list) -> bool:
@@ -86,7 +87,8 @@ def _clean_stale_policies(services: list, existing_policies: list) -> None:
                 ResourceId=existing_policy_dict['ResourceId'],
                 ScalableDimension='ecs:service:DesiredCount'
         )
-        logger.info('Removed stale policy: %s', response)
+        logger.info('Removed state policy: %s', existing_policy_dict['PolicyName'])
+        logger.debug('Removed stale policy details: %s', response)
 
 
 def register_scalable_targets(services: list) -> None:
@@ -107,7 +109,8 @@ def _register_scalable_target(scale_dict: dict, resource_id: str) -> None:
             MinCapacity=scale_dict['MinCapacity'],
             MaxCapacity=scale_dict['MaxCapacity'],
     )
-    logger.info('Registered service as a scalable target: %s', response)
+    logger.info('Registered service as a scalable target: %s', resource_id)
+    logger.debug('Registered service as a scalable target details: %s', response)
 
 
 def _deregister_scalable_target(resource_id: str) -> None:
@@ -116,4 +119,5 @@ def _deregister_scalable_target(resource_id: str) -> None:
             ResourceId=resource_id,
             ScalableDimension='ecs:service:DesiredCount',
     )
-    logger.info('Deregistered service as a scalable target: %s', response)
+    logger.info('Deregistered service as a scalable target: %s', resource_id)
+    logger.debug('Deregistered service as a scalable target details: %s', response)

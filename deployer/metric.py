@@ -53,4 +53,5 @@ def _create_missing_metrics(missing_metrics: list) -> None:
                 },
             ]
         )
-        logger.info('Created metric: %s', response)
+        logger.info('Created metric: %s', missing_metric['MetricStat']['Metric']['MetricName'])
+        logger.debug('Created metric details: %s', response)

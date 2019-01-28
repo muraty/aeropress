@@ -74,7 +74,8 @@ def _create_missing_services(services: list) -> None:
             schedulingStrategy=service_dict['schedulingStrategy'],
             deploymentController=service_dict['deploymentController'],
         )
-        logger.info('Created service: %s', response)
+        logger.info('Created service: %s', service_dict['serviceName'])
+        logger.debug('Created service details: %s', response)
 
 
 def _update_services(services: list) -> None:
@@ -87,4 +88,5 @@ def _update_services(services: list) -> None:
             taskDefinition=service_dict['taskDefinition'],
             forceNewDeployment=True,
         )
-        logger.info('Updated service: %s', response)
+        logger.info('Updated service: %s', service_dict['serviceName'])
+        logger.debug('Updated service details: %s', response)
