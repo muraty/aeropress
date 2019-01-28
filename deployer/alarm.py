@@ -41,10 +41,10 @@ def _clean_stale_alarms(existing_alarms: list, services: list) -> None:
     stale_alarm_names = [ea['AlarmName'] for ea in existing_alarms if ea['AlarmName'] not in defined_alarm_names]
 
     # Batch delete for stale alarms.
-    response = cloudwatch_client.delete_alarms(AlarmNames=stale_alarm_names)
-
-    logger.info('Deleted stale alarms: %s', stale_alarm_names)
-    logger.debug('Deleted stale alarms details: %s', response)
+    if stale_alarm_names:
+        response = cloudwatch_client.delete_alarms(AlarmNames=stale_alarm_names)
+        logger.info('Deleted stale alarms: %s', stale_alarm_names)
+        logger.debug('Deleted stale alarms details: %s', response)
 
 
 def _validate_alarm_names(services: list) -> None:

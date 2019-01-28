@@ -70,14 +70,16 @@ def _load_config(root_path: Path, image_url: str) -> Dict:
                         container_definition['image'] = image_url
 
                 config[parent_key].append(data)
-    else:
-        logger.error('No config file is found!')
 
     return config
 
 
 # TODO: Add more check.
 def _is_valid_config(config: dict) -> bool:
+    if not config['services']:
+        logger.error('No service definition is found!')
+        return False
+
     task_definitions = [task_dict['family'] for task_dict in config['tasks']]
 
     for service_dict in config['services']:

@@ -55,7 +55,7 @@ def _create_or_update_all_policies(services: list, existing_policies: list) -> N
                     ScalableDimension=policy_dict['ScalableDimension'],
                     StepScalingPolicyConfiguration=policy_dict['StepScalingPolicyConfiguration'],
             )
-            logger.info('Crated scaling policy: %s', policy_dict['PolicyName'])
+            logger.info('Crated scaling policy: %s for %s', policy_dict['PolicyName'], resource_id)
             logger.debug('Created scaling policy details: %s', response)
 
 
