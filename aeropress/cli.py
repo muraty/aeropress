@@ -16,6 +16,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description='aeropress AWS ECS deployment helper')
     parser.add_argument('path', type=str, help='Config path that includes service definitions.')
     parser.add_argument('image_url', type=str, help='Image URL for docker image.')
+    parser.add_argument('--service-name',
+                        type=str,
+                        default='all',
+                        help='Service name that will be updated. If not present, all services will be updated')
     parser.add_argument('--logging-level',
                         default='info',
                         choices=['debug', 'info', 'warning', 'error'],
@@ -44,7 +48,7 @@ def main() -> None:
         raise AeropressException()
 
     logger.info("Deploying the image '%s' from path: %s", args.image_url, args.path)
-    deploy(config_dict)
+    deploy(config_dict, args.service_name)
 
 
 def _load_config(root_path: Path, image_url: str) -> Dict:
@@ -94,12 +98,42 @@ def _is_valid_config(config: dict) -> bool:
     return True
 
 
-def deploy(config_dict: dict) -> None:
+def deploy(config_dict: dict, service_name: str) -> None:
+    if service_name == 'all':
+        clean_stale = True
+        tasks = config_dict['tasks']
+        services = config_dict['services']
+    else:
+        clean_stale = False
+        selected_service = {}  # type: Dict[str, Any]
+        for service_dict in config_dict['services']:
+            if service_dict['serviceName'] == service_name:
+                selected_service = service_dict.copy()
+                break
+
+        if not selected_service:
+            service_names = '\n'.join([service_dict['serviceName'] for service_dict in config_dict['services']])
+            logger.error("Given service %s is not found! Valid service names: %s ", service_name, service_names)
+            raise AeropressException()
+
+        service_task_dict = {}  # type: Dict[str, Any]
+        for task_dict in config_dict['tasks']:
+            if task_dict['family'] == selected_service['taskDefinition']:
+                service_task_dict = task_dict.copy()
+                break
+
+        if not service_task_dict:
+            logger.error('Task definition is not found for given service %s!', service_name)
+            raise AeropressException()
+
+        tasks = [service_task_dict]
+        services = [service_dict]
+
     # Register task definitions.
-    task.register_all(config_dict['tasks'])
+    task.register_all(tasks, clean_stale)
 
     # Update all services (Create if not exists.)
-    service.update_all(config_dict['services'])
+    service.update_all(services, clean_stale)
 
 
 def setup_logging(level: str) -> None:

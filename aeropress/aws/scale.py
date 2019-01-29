@@ -7,7 +7,7 @@ from aeropress import logger
 scaling_client = boto3.client('application-autoscaling', region_name='eu-west-1')
 
 
-def create_scaling_policies(services: list) -> None:
+def create_scaling_policies(services: list, clean_stale: bool) -> None:
     # Get already defined scaling policies
     existing_policies = get_existing_scaling_policies()
 
@@ -15,7 +15,8 @@ def create_scaling_policies(services: list) -> None:
     filtered_services = [service_dict for service_dict in services if service_dict.get('scale')]
 
     # Clean stale policies
-    _clean_stale_policies(filtered_services, existing_policies)
+    if clean_stale:
+        _clean_stale_policies(filtered_services, existing_policies)
 
     # Create or update all policies
     _create_or_update_all_policies(filtered_services, existing_policies)

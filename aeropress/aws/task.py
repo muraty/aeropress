@@ -7,7 +7,7 @@ from aeropress import AeropressException
 ecs_client = boto3.client('ecs', region_name='eu-west-1')
 
 
-def register_all(tasks: list) -> None:
+def register_all(tasks: list, clean_stale: bool) -> None:
     # First, validate log definitions.
     _validate_log_definitions(tasks)
 
@@ -22,9 +22,10 @@ def register_all(tasks: list) -> None:
     create_missing_log_groups(missing_log_group_names)
 
     # Delete stale log groups
-    # TODO: Make this inside log.py
-    stale_log_group_names = existing_log_group_names.difference(defined_log_group_names)
-    clean_stale_log_groups(stale_log_group_names)
+    if clean_stale:
+        # TODO: Make this inside log.py
+        stale_log_group_names = existing_log_group_names.difference(defined_log_group_names)
+        clean_stale_log_groups(stale_log_group_names)
 
     # Register task definitions
     _register_task_definitions(tasks)

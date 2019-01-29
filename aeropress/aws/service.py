@@ -8,7 +8,7 @@ from aeropress import logger
 ecs_client = boto3.client('ecs', region_name='eu-west-1')
 
 
-def update_all(services: list) -> None:
+def update_all(services: list, clean_stale: bool) -> None:
     # TODO: Add cluster check.
 
     # Create missing services
@@ -18,13 +18,13 @@ def update_all(services: list) -> None:
     register_scalable_targets(services)
 
     # Create missing scaling policies.
-    create_scaling_policies(services)
+    create_scaling_policies(services, clean_stale)
 
     # Create missing metrics via Cloudwatch for policies
     create_metrics(services)
 
     # Create missing scaling alarms
-    create_scaling_alarms(services)
+    create_scaling_alarms(services, clean_stale)
 
     # Update all services with force-new-deployament flag.
     _update_services(services)

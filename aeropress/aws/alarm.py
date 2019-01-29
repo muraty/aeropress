@@ -9,7 +9,7 @@ from aeropress import AeropressException
 cloudwatch_client = boto3.client('cloudwatch', region_name='eu-west-1')
 
 
-def create_scaling_alarms(services: list) -> None:
+def create_scaling_alarms(services: list, clean_stale: bool) -> None:
     # Filter out those services which does not have alarm attribute.
     filtered_services = [service_dict for service_dict in services if service_dict.get('alarm')]
 
@@ -17,8 +17,9 @@ def create_scaling_alarms(services: list) -> None:
     _validate_alarm_names(filtered_services)
 
     # Clean stale alarms
-    existing_alarms = _get_existing_alarms()
-    _clean_stale_alarms(existing_alarms, filtered_services)
+    if clean_stale:
+        existing_alarms = _get_existing_alarms()
+        _clean_stale_alarms(existing_alarms, filtered_services)
 
     # Create or update alarms.
     existing_policies = get_existing_scaling_policies()
