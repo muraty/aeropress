@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
 from aeropress import logger
+from aeropress import AeropressException
 from aeropress.aws import task, service
 from aeropress._version import __version__
 
@@ -40,7 +41,7 @@ def main() -> None:
     # Validate definitions
     if not _is_valid_config(config_dict):
         logger.error('Config is not valid!')
-        os._exit(1)
+        raise AeropressException()
 
     logger.info("Deploying the image '%s' from path: %s", args.image_url, args.path)
     deploy(config_dict)

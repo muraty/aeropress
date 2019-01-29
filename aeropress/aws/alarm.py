@@ -1,10 +1,10 @@
-import os
 from typing import List, Dict, Any  # noqa
 
 import boto3
 
 from aeropress.aws.scale import get_existing_scaling_policies
 from aeropress import logger
+from aeropress import AeropressException
 
 cloudwatch_client = boto3.client('cloudwatch', region_name='eu-west-1')
 
@@ -56,9 +56,8 @@ def _validate_alarm_names(services: list) -> None:
         if service_dict['alarm']['AlarmName'].startswith('ecs:'):
             continue
 
-        logger.error("Alarm names must start with 'ecs:' prefix %s", service_dict)
-        # TODO: Create custom exception and do not use os package directly.
-        os._exit(1)
+        logger.error("Alarm names must start with 'ecs:' prefix %s" % service_dict)
+        raise AeropressException()
 
 
 def _get_existing_alarms() -> list:

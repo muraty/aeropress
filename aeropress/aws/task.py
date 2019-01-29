@@ -1,9 +1,8 @@
-import os
-
 import boto3
 
 from aeropress.aws.log import get_existing_log_group_names, create_missing_log_groups, clean_stale_log_groups
 from aeropress import logger
+from aeropress import AeropressException
 
 ecs_client = boto3.client('ecs', region_name='eu-west-1')
 
@@ -68,11 +67,11 @@ def _validate_log_definitions(tasks: list) -> None:
             options = container_definition['logConfiguration']['options']
             if not options['awslogs-group'].startswith('/ecs'):
                 logger.error("log groups must start with '/ecs/' prefix: %s", options)
-                os._exit(1)
+                raise AeropressException()
 
             if options['awslogs-stream-prefix'] != 'ecs':
                 logger.error("logstream prefixes must be 'ecs' : %s", options)
-                os._exit(1)
+                raise AeropressException()
 
 
 def _get_defined_log_group_names(tasks: list) -> set:
