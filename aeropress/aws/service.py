@@ -65,6 +65,7 @@ def _create_missing_services(services: list) -> None:
 
     # Create missing services.
     for service_dict in missing_services:
+        logger.info('Creating service: %s', service_dict['serviceName'])
         response = ecs_client.create_service(
             cluster=service_dict['cluster'],
             serviceName=service_dict['serviceName'],
@@ -74,12 +75,13 @@ def _create_missing_services(services: list) -> None:
             schedulingStrategy=service_dict['schedulingStrategy'],
             deploymentController=service_dict['deploymentController'],
         )
-        logger.info('Created service: %s', service_dict['serviceName'])
         logger.debug('Created service details: %s', response)
 
 
 def _update_services(services: list) -> None:
     for service_dict in services:
+        logger.info('Updating service: %s', service_dict['serviceName'])
+
         # If a task revision is not specified, the latest ACTIVE revision is used.
         response = ecs_client.update_service(
             cluster=service_dict['cluster'],
@@ -88,5 +90,4 @@ def _update_services(services: list) -> None:
             taskDefinition=service_dict['taskDefinition'],
             forceNewDeployment=True,
         )
-        logger.info('Updated service: %s', service_dict['serviceName'])
         logger.debug('Updated service details: %s', response)

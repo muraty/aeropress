@@ -42,6 +42,7 @@ def _get_existing_metrics() -> list:
 
 def _create_missing_metrics(missing_metrics: list) -> None:
     for missing_metric in missing_metrics:
+        logger.info('Creating metric: %s', missing_metric['MetricStat']['Metric']['MetricName'])
         response = cloudwatch_client.put_metric_data(
             Namespace=missing_metric['MetricStat']['Metric']['Namespace'],
             MetricData=[
@@ -53,5 +54,4 @@ def _create_missing_metrics(missing_metrics: list) -> None:
                 },
             ]
         )
-        logger.info('Created metric: %s', missing_metric['MetricStat']['Metric']['MetricName'])
         logger.debug('Created metric details: %s', response)

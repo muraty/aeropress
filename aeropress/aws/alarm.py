@@ -42,8 +42,8 @@ def _clean_stale_alarms(existing_alarms: list, services: list) -> None:
 
     # Batch delete for stale alarms.
     if stale_alarm_names:
+        logger.info('Deleting stale alarms: %s', stale_alarm_names)
         response = cloudwatch_client.delete_alarms(AlarmNames=stale_alarm_names)
-        logger.info('Deleted stale alarms: %s', stale_alarm_names)
         logger.debug('Deleted stale alarms details: %s', response)
 
 
