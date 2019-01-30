@@ -39,26 +39,23 @@ def main() -> None:
 
     # Create config dict, first.
     config_path = Path(args.path)
-    config_dict = _load_config(config_path, args.image_url)
+    services = _load_config(config_path, args.image_url)
 
     # Validate definitions
-    if not _is_valid_config(config_dict):
+    if not _is_valid_config(services):
         logger.error('Config is not valid!')
         raise AeropressException()
 
     logger.info("Deploying the image '%s' from path: %s", args.image_url, args.path)
-    deploy(config_dict, args.service_name)
+    deploy(services, args.service_name)
 
 
-def _load_config(root_path: Path, image_url: str) -> Dict:
+def _load_config(root_path: Path, image_url: str) -> list:
     logger.info('Reading yaml config files from %s', root_path)
 
-    config = {
-        'services': [],
-        'clusters': [],
-    }  # type: Dict[str, List[Dict[str, Any]]]
+    services = []  # type: List[Dict[str, Any]]
 
-    # Reading yaml files into a dictionary.
+    # Reading yaml services definitions into a list of dictionary.
     for root, dirs, files in os.walk(root_path.as_posix()):
         for name in files:
             path = Path(os.path.join(root, name))
@@ -66,10 +63,6 @@ def _load_config(root_path: Path, image_url: str) -> Dict:
                 _yaml_dict = yaml.load(f.read())
 
             for key, value in _yaml_dict.items():
-                if key == 'cluster':
-                    config['clusters'].append(value)
-                    continue
-
                 # Handle service defnitions.
                 for service_k, service_v in value.items():
                     if service_k != 'task':
@@ -80,18 +73,18 @@ def _load_config(root_path: Path, image_url: str) -> Dict:
                         # TODO: Check default. If there is an image-url already, do not inject this!
                         container_definition['image'] = image_url
 
-                config['services'].append(value)
+                services.append(value)
 
-    return config
+    return services
 
 
 # TODO: Add more check.
-def _is_valid_config(config: dict) -> bool:
-    if not config['services']:
+def _is_valid_config(services: list) -> bool:
+    if not services:
         logger.error('No service definition is found!')
         return False
 
-    for service_dict in config['services']:
+    for service_dict in services:
         if service_dict['taskDefinition'] != service_dict['task']['family']:
             logger.error('Task definition is not found for service %s!', service_dict['serviceName'])
             return False
@@ -99,21 +92,20 @@ def _is_valid_config(config: dict) -> bool:
     return True
 
 
-def deploy(config_dict: dict, service_name: str) -> None:
+def deploy(services: list, service_name: str) -> None:
     if service_name == 'all':
         clean_stale = True
-        tasks = [service_dict['task'] for service_dict in config_dict['services']]
-        services = config_dict['services']
+        tasks = [service_dict['task'] for service_dict in services]
     else:
         clean_stale = False
         selected_service = {}  # type: Dict[str, Any]
-        for service_dict in config_dict['services']:
+        for service_dict in services:
             if service_dict['serviceName'] == service_name:
                 selected_service = service_dict.copy()
                 break
 
         if not selected_service:
-            service_names = '\n'.join([service_dict['serviceName'] for service_dict in config_dict['services']])
+            service_names = '\n'.join([service_dict['serviceName'] for service_dict in services])
             logger.error("Given service %s is not found! Valid service names: %s ", service_name, service_names)
             raise AeropressException()
 
