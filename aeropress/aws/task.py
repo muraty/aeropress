@@ -36,7 +36,7 @@ def clean_stale_tasks() -> None:
     """
     Clean stale tasks. Leave only active revision.
     """
-    latest_task_revisions = {}  # type: Dict[str, int]
+    active_task_revisions = {}  # type: Dict[str, int]
     all_task_definitions = []  # type: List[Dict[str, Any]]
     next_token = None
     while True:
@@ -45,10 +45,9 @@ def clean_stale_tasks() -> None:
         else:
             resp = ecs_client.list_task_definitions(status='ACTIVE', maxResults=100)
 
-        # Example arn: 'arn:aws:ecs:eu-west-00000000:task-definition/task-foo:23'
         for task_definition_arn in resp['taskDefinitionArns']:
+            # Example arn: 'arn:aws:ecs:eu-west-00000000:task-definition/task-foo:23'
             parts = task_definition_arn.split(':')
-
             name = parts[-2].split('/')[1]
             revision = int(parts[-1])
             all_task_definitions.append(
@@ -59,13 +58,13 @@ def clean_stale_tasks() -> None:
             )
 
             # Initialize dict.
-            if latest_task_revisions.get(name) is None:
-                latest_task_revisions[name] = -1
+            if active_task_revisions.get(name) is None:
+                active_task_revisions[name] = revision
                 continue
 
-            # Set the latest revision.
-            if revision > latest_task_revisions[name]:
-                latest_task_revisions[name] = revision
+            # Set the active revision.
+            if revision > active_task_revisions[name]:
+                active_task_revisions[name] = revision
 
         next_token = resp.get('nextToken')
 
@@ -76,7 +75,7 @@ def clean_stale_tasks() -> None:
     for task_definition in all_task_definitions:
         task_name = task_definition['name']
         revision = task_definition['revision']
-        active_revision = latest_task_revisions[task_name]
+        active_revision = active_task_revisions[task_name]
 
         if revision == active_revision:
             continue
