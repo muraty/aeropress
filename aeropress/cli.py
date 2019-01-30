@@ -13,8 +13,15 @@ from aeropress._version import __version__
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='aeropress AWS ECS deployment helper')
-    parser.add_argument('path', type=str, help='Config path that includes service definitions.')
-    parser.add_argument('image_url', type=str, help='Image URL for docker image.')
+    parser.add_argument('--path',
+                        type=str,
+                        help='Config path that includes service definitions.')
+    parser.add_argument('--image-url',
+                        type=str,
+                        help='Image URL for docker image.')
+    parser.add_argument('--clean-stale-tasks',
+                        action='store_true',
+                        help='Cleans all stale tasks and leave only active revisions.')
     parser.add_argument('--service-name',
                         type=str,
                         default='all',
@@ -24,18 +31,23 @@ def main() -> None:
                         choices=['debug', 'info', 'warning', 'error'],
                         type=str.lower,
                         help='Print debug logs')
-    parser.add_argument('--version', action='version',
+    parser.add_argument('--version',
+                        action='version',
                         version='{version}'.format(version=__version__))
 
     args = parser.parse_args()
 
     # TODO:
-    # Add param for clean stale tasks.
     # region_name param
-    # Clean stale tasks param
+    # Sub commands: deploy, clean
 
     # Setup logger
     setup_logging(args.logging_level)
+
+    # Clean stale tasks and exit.
+    if args.clean_stale_tasks:
+        task.clean_stale_tasks()
+        return
 
     # Create config dict, first.
     config_path = Path(args.path)

@@ -1,4 +1,5 @@
 import boto3
+from typing import List, Dict, Any  # noqa
 
 from aeropress.aws.log import get_existing_log_group_names, create_missing_log_groups, clean_stale_log_groups
 from aeropress import logger
@@ -29,6 +30,68 @@ def register_all(tasks: list, clean_stale: bool) -> None:
 
     # Register task definitions
     _register_task_definitions(tasks)
+
+
+def clean_stale_tasks() -> None:
+    """
+    Clean stale tasks. Leave only active revision.
+    """
+    latest_task_revisions = {}  # type: Dict[str, int]
+    all_task_definitions = []  # type: List[Dict[str, Any]]
+    next_token = None
+    while True:
+        if next_token:
+            resp = ecs_client.list_task_definitions(status='ACTIVE', maxResults=100, nextToken=next_token)
+        else:
+            resp = ecs_client.list_task_definitions(status='ACTIVE', maxResults=100)
+
+        # Example arn: 'arn:aws:ecs:eu-west-00000000:task-definition/task-foo:23'
+        for task_definition_arn in resp['taskDefinitionArns']:
+            parts = task_definition_arn.split(':')
+
+            name = parts[-2].split('/')[1]
+            revision = int(parts[-1])
+            all_task_definitions.append(
+                {
+                    'name': name,
+                    'revision': revision,
+                }
+            )
+
+            # Initialize dict.
+            if latest_task_revisions.get(name) is None:
+                latest_task_revisions[name] = -1
+                continue
+
+            # Set the latest revision.
+            if revision > latest_task_revisions[name]:
+                latest_task_revisions[name] = revision
+
+        next_token = resp.get('nextToken')
+
+        # All task definitions are loaded.
+        if not next_token:
+            break
+
+    for task_definition in all_task_definitions:
+        task_name = task_definition['name']
+        revision = task_definition['revision']
+        active_revision = latest_task_revisions[task_name]
+
+        if revision == active_revision:
+            continue
+
+        if revision > active_revision:
+            logger.error('Active revision is not set correct! Active revision is set to %s for ',
+                         active_revision,
+                         task_name)
+            raise AeropressException()
+
+        stale_task_name = task_name + ':' + str(revision)
+        active_task_name = task_name + ':' + str(active_revision)
+        logger.info('Deregistering task definition %s. Active revision is %s', stale_task_name, active_task_name)
+        response = ecs_client.deregister_task_definition(name)
+        logger.debug('Deregistered stale task: %s', response)
 
 
 def _register_task_definitions(tasks: list) -> None:
