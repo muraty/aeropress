@@ -2,7 +2,6 @@ import os
 import yaml
 import logging
 import argparse
-from collections import defaultdict
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
@@ -54,30 +53,34 @@ def main() -> None:
 def _load_config(root_path: Path, image_url: str) -> Dict:
     logger.info('Reading yaml config files from %s', root_path)
 
-    config = defaultdict(list)  # type: Dict[str, List[Dict[str, Any]]]
+    config = {
+        'services': [],
+        'clusters': [],
+    }  # type: Dict[str, List[Dict[str, Any]]]
 
     # Reading yaml files into a dictionary.
-    parent_map = {
-        'task': 'tasks',
-        'service': 'services',
-        'cluster': 'clusters',
-    }
     for root, dirs, files in os.walk(root_path.as_posix()):
         for name in files:
             path = Path(os.path.join(root, name))
             with open(path.as_posix()) as f:
                 _yaml_dict = yaml.load(f.read())
 
-            for key, data in _yaml_dict.items():
-                parent_key = parent_map[key]
+            for key, value in _yaml_dict.items():
+                if key == 'cluster':
+                    config['clusters'].append(value)
+                    continue
 
-                # Inject image-url into container definitions.
-                if key == 'task':
-                    for container_definition in data['containerDefinitions']:
+                # Handle service defnitions.
+                for service_k, service_v in value.items():
+                    if service_k != 'task':
+                        continue
+
+                    # Inject image-url into container definitions.
+                    for container_definition in service_v['containerDefinitions']:
                         # TODO: Check default. If there is an image-url already, do not inject this!
                         container_definition['image'] = image_url
 
-                config[parent_key].append(data)
+                config['services'].append(value)
 
     return config
 
@@ -88,11 +91,9 @@ def _is_valid_config(config: dict) -> bool:
         logger.error('No service definition is found!')
         return False
 
-    task_definitions = [task_dict['family'] for task_dict in config['tasks']]
-
     for service_dict in config['services']:
-        if service_dict['taskDefinition'] not in task_definitions:
-            logger.error('Task definition %s is not found!', service_dict['taskDefinition'])
+        if service_dict['taskDefinition'] != service_dict['task']['family']:
+            logger.error('Task definition is not found for service %s!', service_dict['serviceName'])
             return False
 
     return True
@@ -101,7 +102,7 @@ def _is_valid_config(config: dict) -> bool:
 def deploy(config_dict: dict, service_name: str) -> None:
     if service_name == 'all':
         clean_stale = True
-        tasks = config_dict['tasks']
+        tasks = [service_dict['task'] for service_dict in config_dict['services']]
         services = config_dict['services']
     else:
         clean_stale = False
@@ -116,18 +117,8 @@ def deploy(config_dict: dict, service_name: str) -> None:
             logger.error("Given service %s is not found! Valid service names: %s ", service_name, service_names)
             raise AeropressException()
 
-        service_task_dict = {}  # type: Dict[str, Any]
-        for task_dict in config_dict['tasks']:
-            if task_dict['family'] == selected_service['taskDefinition']:
-                service_task_dict = task_dict.copy()
-                break
-
-        if not service_task_dict:
-            logger.error('Task definition is not found for given service %s!', service_name)
-            raise AeropressException()
-
-        tasks = [service_task_dict]
-        services = [service_dict]
+        tasks = [selected_service['task']]
+        services = [selected_service]
 
     # Register task definitions.
     task.register_all(tasks, clean_stale)

@@ -59,23 +59,22 @@ service:
           StepAdjustments:
               - MetricIntervalLowerBound: 0
                 ScalingAdjustment: 1
-
-task:
-  family: task-foo
-  networkMode: bridge
-  taskRoleArn: ecsTaskExecutionRole
-  executionRoleArn: ecsTaskExecutionRole
-  requiresCompatibilities:
-    - EC2
-  containerDefinitions:
-    - name: container-foo
-      logConfiguration:
-        logDriver: awslogs
-        options:
-          awslogs-group: "/ecs/task-foo"
-          awslogs-region: eu-west-1
-          awslogs-stream-prefix: ecs
-      memoryReservation: 128
-      entryPoint:
-        - "python"
-        - "--version"
+  task:
+    family: task-foo
+    networkMode: bridge
+    taskRoleArn: ecsTaskExecutionRole
+    executionRoleArn: ecsTaskExecutionRole
+    requiresCompatibilities:
+      - EC2
+    containerDefinitions:
+      - name: container-foo
+        logConfiguration:
+          logDriver: awslogs
+          options:
+            awslogs-group: "/ecs/task-foo"
+            awslogs-region: eu-west-1
+            awslogs-stream-prefix: ecs
+        memoryReservation: 128
+        entryPoint:
+          - "python"
+          - "--version"
