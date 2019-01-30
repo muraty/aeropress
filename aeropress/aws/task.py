@@ -90,7 +90,7 @@ def clean_stale_tasks() -> None:
         stale_task_name = task_name + ':' + str(revision)
         active_task_name = task_name + ':' + str(active_revision)
         logger.info('Deregistering task definition %s. Active revision is %s', stale_task_name, active_task_name)
-        response = ecs_client.deregister_task_definition(name)
+        response = ecs_client.deregister_task_definition(taskDefinition=stale_task_name)
         logger.debug('Deregistered stale task: %s', response)
 
 
