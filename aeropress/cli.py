@@ -5,6 +5,8 @@ import argparse
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
+import docker
+
 from aeropress import logger
 from aeropress import AeropressException
 from aeropress.aws import task, service
@@ -13,6 +15,12 @@ from aeropress._version import __version__
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='aeropress AWS ECS deployment helper')
+    parser.add_argument('--deploy',
+                        action='store_true',
+                        help='Deploy docker image')
+    parser.add_argument('--push',
+                        action='store_true',
+                        help='Push image url to ECR.')
     parser.add_argument('--path',
                         type=str,
                         help='Config path that includes service definitions.')
@@ -26,6 +34,22 @@ def main() -> None:
                         type=str,
                         default='all',
                         help='Service name that will be updated. If not present, all services will be updated')
+    parser.add_argument('--build-image',
+                        action='store_true',
+                        help='Builds Docker image.')
+    parser.add_argument("--build-args",
+                        action='append',
+                        type=lambda kv: kv.split("="),
+                        help='Build arguments for building Docker image.')
+    parser.add_argument('--build-path',
+                        type=str,
+                        help='Path to the directory containing the Dockerfile.')
+    parser.add_argument('--dockerfile-path',
+                        type=str,
+                        help='path within the build context to the Dockerfile')
+    parser.add_argument('--image-tag',
+                        type=str,
+                        help='A tag to add to the final image.')
     parser.add_argument('--logging-level',
                         default='info',
                         choices=['debug', 'info', 'warning', 'error'],
@@ -39,7 +63,7 @@ def main() -> None:
 
     # TODO:
     # region_name param
-    # Sub commands: deploy, clean
+    # Sub commands: deploy, clean, build, push
 
     # Setup logger
     setup_logging(args.logging_level)
@@ -49,17 +73,42 @@ def main() -> None:
         task.clean_stale_tasks()
         return
 
-    # Create config dict, first.
-    config_path = Path(args.path)
-    services = _load_config(config_path, args.image_url)
+    if args.build_image:
+        build_image(args.build_path, args.dockerfile_path, args.build_args, args.image_tag)
 
-    # Validate definitions
-    if not _is_valid_config(services):
-        logger.error('Config is not valid!')
-        raise AeropressException()
+    if args.deploy:
+        # Create config dict, first.
+        config_path = Path(args.path)
+        services = _load_config(config_path, args.image_url)
 
-    logger.info("Deploying the image '%s' from path: %s", args.image_url, args.path)
-    deploy(services, args.service_name)
+        # Validate definitions
+        if not _is_valid_config(services):
+            logger.error('Config is not valid!')
+            raise AeropressException()
+
+        logger.info("Deploying the image '%s' from path: %s", args.image_url, args.path)
+        deploy(services, args.service_name)
+
+    if args.push:
+        logger.info('Pushing image with tag %s to repository: %s', args.push_tag, args.push_repository)
+        push_image(args.push_repository, args.push_tag)
+
+
+def build_image(build_path: str, dockerfile_path: str, build_args: dict, tag: str) -> None:
+    """
+    path: Path to the directory containing the Dockerfile
+    build_args:  A dictionary of build arguments
+    tag: A tag to add to the final image
+    dockerfile: path within the build context to the Dockerfile
+    """
+    build_args = {build_args[0][0]: build_args[0][1]}
+    client = docker.from_env()
+    image, build_logs = client.images.build(path=build_path, dockerfile=dockerfile_path, buildargs=build_args, tag=tag)
+
+
+def push_image(repository: str, tag: str) -> None:
+    client = docker.from_env()
+    client.images.push(repository, tag=tag)
 
 
 def _load_config(root_path: Path, image_url: str) -> list:
