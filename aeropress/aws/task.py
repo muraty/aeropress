@@ -104,6 +104,7 @@ def _register_task_definitions(tasks: list) -> None:
                 'logConfiguration': container_definition['logConfiguration'],
                 'memoryReservation': container_definition['memoryReservation'],
                 'entryPoint': container_definition['entryPoint'],
+                'environment': container_definition['environment'],
             })
 
         logger.info('Creating task definition: %s', task_dict['family'])
