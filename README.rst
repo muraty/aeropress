@@ -25,20 +25,25 @@ Usage
 ::
 
     $ aeropress --help
-    usage: aeropress [-h] [--logging-level {debug,info,warning,error}] [--version]
-                    path image_url
+    usage: cli.py [-h] [--path PATH] [--image-url IMAGE_URL] [--clean-stale-tasks]
+                  [--service-name SERVICE_NAME]
+                  [--logging-level {debug,info,warning,error}] [--version]
 
     aeropress AWS ECS deployment helper
 
-    positional arguments:
-    path                  Config path that includes service definitions.
-    image_url             Image URL for docker image.
-
     optional arguments:
-    -h, --help            show this help message and exit
-    --logging-level {debug,info,warning,error}
+      -h, --help            show this help message and exit
+      --path PATH           Config path that includes service definitions.
+      --image-url IMAGE_URL
+                            Image URL for docker image.
+      --clean-stale-tasks   Cleans all stale tasks and leave only active
+                            revisions.
+      --service-name SERVICE_NAME
+                            Service name that will be updated. If not present, all
+                            services will be updated
+      --logging-level {debug,info,warning,error}
                             Print debug logs
-    --version             show program's version number and exit
+      --version             show program's version number and exit
 
 
 Example
@@ -48,4 +53,4 @@ You must have defined an ECS cluster first. Then, you can define ECS tasks and s
 ``aeropress`` with required arguments.
 ::
 
-  aeropress 'example/foo.yaml' 'registry.hub.docker.com/library/python'
+  aeropress --path 'example/foo.yaml' --image-url 'registry.hub.docker.com/library/python'
