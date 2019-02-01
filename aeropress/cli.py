@@ -5,11 +5,10 @@ import argparse
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
-import docker
-
 from aeropress import logger
 from aeropress import AeropressException
 from aeropress.aws import task, service
+from aeropress import docker as aeropress_docker
 from aeropress._version import __version__
 
 
@@ -58,7 +57,7 @@ def main() -> None:
                                action='append',
                                dest='docker_build_args',
                                type=lambda kv: kv.split("="),
-                               help='Build arguments for building Docker image.')
+                               help='Build arguments key-value pair list for building Docker image.')
     parser_docker.add_argument('--build-path',
                                type=str,
                                dest='docker_build_path',
@@ -73,16 +72,16 @@ def main() -> None:
                                help='A tag to add to the final image.')
     parser_docker.add_argument('--push',
                                action='store_true',
-                               dest='docker_push',
+                               dest='docker_push_image',
                                help='Push image url to given registry')
-    parser_docker.add_argument('--push-repository',
+    parser_docker.add_argument('--local-tag',
                                type=str,
-                               dest='docker_push_repository',
-                               help='')
-    parser_docker.add_argument('--push-tag',
+                               dest='docker_local_tag',
+                               help='local tag for pushing image')
+    parser_docker.add_argument('--remote-tag',
                                type=str,
-                               dest='docker_push_tag',
-                               help='')
+                               dest='docker_remote_tag',
+                               help='remote tag for pushing image')
 
     # Main command
     parser.add_argument('--logging-level',
@@ -112,17 +111,15 @@ def main() -> None:
 
     if args.subparser_name == 'docker':
         if args.docker_build_image:
-            build_image(args.docker_build_path,
-                        args.docker_dockerfile_path,
-                        args.docker_build_args,
-                        args.docker_image_tag)
+            aeropress_docker.build_image(args.docker_build_path,
+                                         args.docker_dockerfile_path,
+                                         args.docker_build_args,
+                                         args.docker_image_tag)
             return
 
         if args.docker_push_image:
-            logger.info('Pushing image with tag %s to repository: %s',
-                        args.docker_push_tag,
-                        args.docker_push_repository)
-            push_image(args.docker_push_repository, args.docker_push_tag)
+            logger.info('Pushing image with remote tag: %s', args.docker_remote_tag)
+            aeropress_docker.push_image_to_ecr(args.docker_local_tag, args.docker_remote_tag)
             return
 
     if args.subparser_name == 'deploy':
@@ -139,23 +136,6 @@ def main() -> None:
             logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.deploy_path)
             deploy(services, args.deploy_service_name)
             return
-
-
-def build_image(build_path: str, dockerfile_path: str, build_args: dict, tag: str) -> None:
-    """
-    path: Path to the directory containing the Dockerfile
-    build_args:  A dictionary of build arguments
-    tag: A tag to add to the final image
-    dockerfile: path within the build context to the Dockerfile
-    """
-    build_args = {build_args[0][0]: build_args[0][1]}
-    client = docker.from_env()
-    image, build_logs = client.images.build(path=build_path, dockerfile=dockerfile_path, buildargs=build_args, tag=tag)
-
-
-def push_image(repository: str, tag: str) -> None:
-    client = docker.from_env()
-    client.images.push(repository, tag=tag)
 
 
 def _load_config(root_path: Path, image_url: str) -> list:
