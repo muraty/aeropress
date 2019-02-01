@@ -24,27 +24,24 @@ Usage
 
 ::
 
-    $ aeropress --help
-    usage: cli.py [-h] [--path PATH] [--image-url IMAGE_URL] [--clean-stale-tasks]
-                  [--service-name SERVICE_NAME]
-                  [--logging-level {debug,info,warning,error}] [--version]
+  $ aeropress --help
+  usage: cli.py [-h] [--logging-level {debug,info,warning,error}] [--version]
+                {deploy,docker,clean} ...
 
-    aeropress AWS ECS deployment helper
+  aeropress AWS ECS deployment helper
 
-    optional arguments:
-      -h, --help            show this help message and exit
-      --path PATH           Config path that includes service definitions.
-      --image-url IMAGE_URL
-                            Image URL for docker image.
-      --clean-stale-tasks   Cleans all stale tasks and leave only active
-                            revisions.
-      --service-name SERVICE_NAME
-                            Service name that will be updated. If not present, all
-                            services will be updated
-      --logging-level {debug,info,warning,error}
-                            Print debug logs
-      --version             show program's version number and exit
+  positional arguments:
+    {deploy,docker,clean}
+                          sub-command help
+      deploy              Deploy docker image to ECS.
+      docker              Docker commands.
+      clean               Clean commands for stale entitites on AWS.
 
+  optional arguments:
+    -h, --help            show this help message and exit
+    --logging-level {debug,info,warning,error}
+                          Print debug logs
+    --version             show program's version number and exit
 
 Example
 -------
