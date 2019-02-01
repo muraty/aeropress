@@ -15,55 +15,88 @@ from aeropress._version import __version__
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='aeropress AWS ECS deployment helper')
-    parser.add_argument('--deploy',
-                        action='store_true',
-                        help='Deploy docker image')
-    parser.add_argument('--push',
-                        action='store_true',
-                        help='Push image url to ECR.')
-    parser.add_argument('--path',
-                        type=str,
-                        help='Config path that includes service definitions.')
-    parser.add_argument('--image-url',
-                        type=str,
-                        help='Image URL for docker image.')
-    parser.add_argument('--clean-stale-tasks',
-                        action='store_true',
-                        help='Cleans all stale tasks and leave only active revisions.')
-    parser.add_argument('--service-name',
-                        type=str,
-                        default='all',
-                        help='Service name that will be updated. If not present, all services will be updated')
-    parser.add_argument('--build-image',
-                        action='store_true',
-                        help='Builds Docker image.')
-    parser.add_argument("--build-args",
-                        action='append',
-                        type=lambda kv: kv.split("="),
-                        help='Build arguments for building Docker image.')
-    parser.add_argument('--build-path',
-                        type=str,
-                        help='Path to the directory containing the Dockerfile.')
-    parser.add_argument('--dockerfile-path',
-                        type=str,
-                        help='path within the build context to the Dockerfile')
-    parser.add_argument('--image-tag',
-                        type=str,
-                        help='A tag to add to the final image.')
+    subparsers = parser.add_subparsers(help='sub-command help')
+
+    parser_deploy = subparsers.add_parser('deploy', help='deploy')
+    parser_docker = subparsers.add_parser('docker', help='docker')
+    parser_clean = subparsers.add_parser('clean', help='clean')
+
+    # deploy subcommand
+    parser_deploy.add_argument('--deploy',
+                               dest='deploy_image',
+                               action='store_true',
+                               help='')
+    parser_deploy.add_argument('--path',
+                               type=str,
+                               dest='deploy_config_path',
+                               help='Config path that includes service definitions.')
+    parser_deploy.add_argument('--image-url',
+                               type=str,
+                               dest='deploy_image_url',
+                               help='Image URL for docker image.')
+    parser_deploy.add_argument('--service-name',
+                               type=str,
+                               default='all',
+                               dest='deploy_service_name',
+                               help='Service name that will be updated. If not present, all services will be updated')
+
+    # clean sub command
+    parser_clean.add_argument('--stale-tasks',
+                              action='store_true',
+                              dest='clean_stale_tasks',
+                              help='Cleans all stale tasks and leave only active revisions.')
+
+    # docker sub command
+    parser_docker.add_argument('--build-image',
+                               action='store_true',
+                               dest='docker_build_image',
+                               help='Builds Docker image.')
+    parser_docker.add_argument("--build-args",
+                               action='append',
+                               dest='docker_build_args',
+                               type=lambda kv: kv.split("="),
+                               help='Build arguments for building Docker image.')
+    parser_docker.add_argument('--build-path',
+                               type=str,
+                               dest='docker_build_path',
+                               help='Path to the directory containing the Dockerfile.')
+    parser_docker.add_argument('--dockerfile-path',
+                               type=str,
+                               dest='docker_dockerfile_path',
+                               help='path within the build context to the Dockerfile')
+    parser_docker.add_argument('--image-tag',
+                               type=str,
+                               dest='docker_image_tag',
+                               help='A tag to add to the final image.')
+    parser_docker.add_argument('--push',
+                               action='store_true',
+                               dest='docker_push',
+                               help='Push image url to given registry')
+    parser_docker.add_argument('--push-repository',
+                               type=str,
+                               dest='docker_push_repository',
+                               help='')
+    parser_docker.add_argument('--push-tag',
+                               type=str,
+                               dest='docker_push_tag',
+                               help='')
+
+    # Main command
     parser.add_argument('--logging-level',
                         default='info',
                         choices=['debug', 'info', 'warning', 'error'],
                         type=str.lower,
+                        dest='logging_level',
                         help='Print debug logs')
     parser.add_argument('--version',
                         action='version',
+                        dest='version',
                         version='{version}'.format(version=__version__))
 
     args = parser.parse_args()
 
     # TODO:
     # region_name param
-    # Sub commands: deploy, clean, build, push
 
     # Setup logger
     setup_logging(args.logging_level)
@@ -73,25 +106,28 @@ def main() -> None:
         task.clean_stale_tasks()
         return
 
-    if args.build_image:
-        build_image(args.build_path, args.dockerfile_path, args.build_args, args.image_tag)
+    if args.docker_build_image:
+        build_image(args.docker_build_path,
+                    args.docker_dockerfile_path,
+                    args.docker_build_args,
+                    args.docker_image_tag)
 
-    if args.deploy:
+    if args.deploy_image:
         # Create config dict, first.
-        config_path = Path(args.path)
-        services = _load_config(config_path, args.image_url)
+        config_path = Path(args.deploy_config_path)
+        services = _load_config(config_path, args.deploy_image_url)
 
         # Validate definitions
         if not _is_valid_config(services):
             logger.error('Config is not valid!')
             raise AeropressException()
 
-        logger.info("Deploying the image '%s' from path: %s", args.image_url, args.path)
-        deploy(services, args.service_name)
+        logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.deploy_path)
+        deploy(services, args.deploy_service_name)
 
-    if args.push:
-        logger.info('Pushing image with tag %s to repository: %s', args.push_tag, args.push_repository)
-        push_image(args.push_repository, args.push_tag)
+    if args.docker_push_image:
+        logger.info('Pushing image with tag %s to repository: %s', args.docker_push_tag, args.docker_push_repository)
+        push_image(args.docker_push_repository, args.docker_push_tag)
 
 
 def build_image(build_path: str, dockerfile_path: str, build_args: dict, tag: str) -> None:
