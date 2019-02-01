@@ -50,4 +50,4 @@ You must have defined an ECS cluster first. Then, you can define ECS tasks and s
 ``aeropress`` with required arguments.
 ::
 
-  aeropress --path 'example/foo.yaml' --image-url 'registry.hub.docker.com/library/python'
+  aeropress deploy --deploy --path 'example/foo.yaml' --image-url 'registry.hub.docker.com/library/python'
