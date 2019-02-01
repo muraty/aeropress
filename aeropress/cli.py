@@ -15,11 +15,14 @@ from aeropress._version import __version__
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='aeropress AWS ECS deployment helper')
-    subparsers = parser.add_subparsers(help='sub-command help')
+    subparsers = parser.add_subparsers(help='sub-command help', dest='subparser_name')
 
-    parser_deploy = subparsers.add_parser('deploy', help='deploy')
-    parser_docker = subparsers.add_parser('docker', help='docker')
-    parser_clean = subparsers.add_parser('clean', help='clean')
+    parser_deploy = subparsers.add_parser('deploy',
+                                          help='Deploy docker image to ECS.')
+    parser_docker = subparsers.add_parser('docker',
+                                          help='Docker commands.')
+    parser_clean = subparsers.add_parser('clean',
+                                         help='Clean commands for stale entitites on AWS.')
 
     # deploy subcommand
     parser_deploy.add_argument('--deploy',
@@ -102,32 +105,40 @@ def main() -> None:
     setup_logging(args.logging_level)
 
     # Clean stale tasks and exit.
-    if args.clean_stale_tasks:
-        task.clean_stale_tasks()
-        return
+    if args.subparser_name == 'clean':
+        if args.clean_stale_tasks:
+            task.clean_stale_tasks()
+            return
 
-    if args.docker_build_image:
-        build_image(args.docker_build_path,
-                    args.docker_dockerfile_path,
-                    args.docker_build_args,
-                    args.docker_image_tag)
+    if args.subparser_name == 'docker':
+        if args.docker_build_image:
+            build_image(args.docker_build_path,
+                        args.docker_dockerfile_path,
+                        args.docker_build_args,
+                        args.docker_image_tag)
+            return
 
-    if args.deploy_image:
-        # Create config dict, first.
-        config_path = Path(args.deploy_config_path)
-        services = _load_config(config_path, args.deploy_image_url)
+        if args.docker_push_image:
+            logger.info('Pushing image with tag %s to repository: %s',
+                        args.docker_push_tag,
+                        args.docker_push_repository)
+            push_image(args.docker_push_repository, args.docker_push_tag)
+            return
 
-        # Validate definitions
-        if not _is_valid_config(services):
-            logger.error('Config is not valid!')
-            raise AeropressException()
+    if args.subparser_name == 'deploy':
+        if args.deploy_image:
+            # Create config dict, first.
+            config_path = Path(args.deploy_config_path)
+            services = _load_config(config_path, args.deploy_image_url)
 
-        logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.deploy_path)
-        deploy(services, args.deploy_service_name)
+            # Validate definitions
+            if not _is_valid_config(services):
+                logger.error('Config is not valid!')
+                raise AeropressException()
 
-    if args.docker_push_image:
-        logger.info('Pushing image with tag %s to repository: %s', args.docker_push_tag, args.docker_push_repository)
-        push_image(args.docker_push_repository, args.docker_push_tag)
+            logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.deploy_path)
+            deploy(services, args.deploy_service_name)
+            return
 
 
 def build_image(build_path: str, dockerfile_path: str, build_args: dict, tag: str) -> None:
