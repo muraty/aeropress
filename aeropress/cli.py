@@ -21,10 +21,6 @@ def main() -> None:
                                          help='Clean commands for stale entitites on AWS.')
 
     # deploy subcommand
-    parser_deploy.add_argument('--deploy',
-                               dest='deploy_image',
-                               action='store_true',
-                               help='')
     parser_deploy.add_argument('--path',
                                type=str,
                                dest='deploy_config_path',
@@ -72,19 +68,18 @@ def main() -> None:
             return
 
     if args.subparser_name == 'deploy':
-        if args.deploy_image:
-            # Create config dict, first.
-            config_path = Path(args.deploy_config_path)
-            services = _load_config(config_path, args.deploy_image_url)
+        # Create config dict, first.
+        config_path = Path(args.deploy_config_path)
+        services = _load_config(config_path, args.deploy_image_url)
 
-            # Validate definitions
-            if not _is_valid_config(services):
-                logger.error('Config is not valid!')
-                raise AeropressException()
+        # Validate definitions
+        if not _is_valid_config(services):
+            logger.error('Config is not valid!')
+            raise AeropressException()
 
-            logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.deploy_config_path)
-            deploy(services, args.deploy_service_name)
-            return
+        logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.deploy_config_path)
+        deploy(services, args.deploy_service_name)
+        return
 
 
 def _load_config(root_path: Path, image_url: str) -> list:
