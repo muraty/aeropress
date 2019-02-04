@@ -82,7 +82,7 @@ def main() -> None:
                 logger.error('Config is not valid!')
                 raise AeropressException()
 
-            logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.deploy_path)
+            logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.deploy_config_path)
             deploy(services, args.deploy_service_name)
             return
 
