@@ -8,7 +8,6 @@ from typing import List, Dict, Any  # noqa
 from aeropress import logger
 from aeropress import AeropressException
 from aeropress.aws import task, service
-from aeropress import docker as aeropress_docker
 from aeropress._version import __version__
 
 
@@ -18,8 +17,6 @@ def main() -> None:
 
     parser_deploy = subparsers.add_parser('deploy',
                                           help='Deploy docker image to ECS.')
-    parser_docker = subparsers.add_parser('docker',
-                                          help='Docker commands.')
     parser_clean = subparsers.add_parser('clean',
                                          help='Clean commands for stale entitites on AWS.')
 
@@ -48,41 +45,6 @@ def main() -> None:
                               dest='clean_stale_tasks',
                               help='Cleans all stale tasks and leave only active revisions.')
 
-    # docker sub command
-    parser_docker.add_argument('--build-image',
-                               action='store_true',
-                               dest='docker_build_image',
-                               help='Builds Docker image.')
-    parser_docker.add_argument("--build-args",
-                               action='append',
-                               dest='docker_build_args',
-                               type=lambda kv: kv.split("="),
-                               help='Build arguments key-value pair list for building Docker image.')
-    parser_docker.add_argument('--build-path',
-                               type=str,
-                               dest='docker_build_path',
-                               help='Path to the directory containing the Dockerfile.')
-    parser_docker.add_argument('--dockerfile-path',
-                               type=str,
-                               dest='docker_dockerfile_path',
-                               help='path within the build context to the Dockerfile')
-    parser_docker.add_argument('--image-tag',
-                               type=str,
-                               dest='docker_image_tag',
-                               help='A tag to add to the final image.')
-    parser_docker.add_argument('--push',
-                               action='store_true',
-                               dest='docker_push_image',
-                               help='Push image url to given registry')
-    parser_docker.add_argument('--local-tag',
-                               type=str,
-                               dest='docker_local_tag',
-                               help='local tag for pushing image')
-    parser_docker.add_argument('--remote-tag',
-                               type=str,
-                               dest='docker_remote_tag',
-                               help='remote tag for pushing image')
-
     # Main command
     parser.add_argument('--logging-level',
                         default='info',
@@ -107,19 +69,6 @@ def main() -> None:
     if args.subparser_name == 'clean':
         if args.clean_stale_tasks:
             task.clean_stale_tasks()
-            return
-
-    if args.subparser_name == 'docker':
-        if args.docker_build_image:
-            aeropress_docker.build_image(args.docker_build_path,
-                                         args.docker_dockerfile_path,
-                                         args.docker_build_args,
-                                         args.docker_image_tag)
-            return
-
-        if args.docker_push_image:
-            logger.info('Pushing image with remote tag: %s', args.docker_remote_tag)
-            aeropress_docker.push_image_to_ecr(args.docker_local_tag, args.docker_remote_tag)
             return
 
     if args.subparser_name == 'deploy':

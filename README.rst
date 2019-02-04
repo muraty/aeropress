@@ -26,7 +26,7 @@ Usage
 
   $ aeropress --help
   usage: cli.py [-h] [--logging-level {debug,info,warning,error}] [--version]
-                {deploy,docker,clean} ...
+                {deploy,clean} ...
 
   aeropress AWS ECS deployment helper
 
@@ -34,7 +34,6 @@ Usage
     {deploy,docker,clean}
                           sub-command help
       deploy              Deploy docker image to ECS.
-      docker              Docker commands.
       clean               Clean commands for stale entitites on AWS.
 
   optional arguments:

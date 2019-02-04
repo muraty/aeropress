@@ -12,7 +12,6 @@ setup(
     python_requires='>=3.5.2',
     install_requires=[
         'boto3>=1.9',
-        'docker==3.7.0'
     ],
     include_package_data=True,
     license='BSD License',
