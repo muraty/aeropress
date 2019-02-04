@@ -92,6 +92,8 @@ def clean_stale_tasks() -> None:
         response = ecs_client.deregister_task_definition(taskDefinition=stale_task_name)
         logger.debug('Deregistered stale task: %s', response)
 
+    logger.info('Cleaned all stale tasks.')
+
 
 def _register_task_definitions(tasks: list) -> None:
     for task_dict in tasks:
