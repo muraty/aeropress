@@ -26,13 +26,13 @@ Usage
 
   $ aeropress --help
   usage: cli.py [-h] [--logging-level {debug,info,warning,error}] [--version]
+                [--path CONFIG_PATH]
                 {deploy,clean} ...
 
   aeropress AWS ECS deployment helper
 
   positional arguments:
-    {deploy,docker,clean}
-                          sub-command help
+    {deploy,clean}        sub-command help
       deploy              Deploy docker image to ECS.
       clean               Clean commands for stale entitites on AWS.
 
@@ -41,6 +41,7 @@ Usage
     --logging-level {debug,info,warning,error}
                           Print debug logs
     --version             show program's version number and exit
+    --path CONFIG_PATH    Config path that includes service definitions.
 
 Example
 -------
@@ -49,4 +50,4 @@ You must have defined an ECS cluster first. Then, you can define ECS tasks and s
 ``aeropress`` with required arguments.
 ::
 
-  aeropress deploy --path 'example/foo.yaml' --image-url 'registry.hub.docker.com/library/python' --service-name service-foo
+  aeropress --path 'example/foo.yaml' deploy --image-url 'registry.hub.docker.com/library/python' --service-name service-foo

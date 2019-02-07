@@ -7,7 +7,7 @@ from typing import List, Dict, Any  # noqa
 
 from aeropress import logger
 from aeropress import AeropressException
-from aeropress.aws import task, service
+from aeropress.aws import task, service, log
 from aeropress._version import __version__
 
 
@@ -21,13 +21,10 @@ def main() -> None:
                                          help='Clean commands for stale entitites on AWS.')
 
     # deploy subcommand
-    parser_deploy.add_argument('--path',
-                               type=str,
-                               dest='deploy_config_path',
-                               help='Config path that includes service definitions.')
     parser_deploy.add_argument('--image-url',
                                type=str,
                                dest='deploy_image_url',
+                               default=None,
                                help='Image URL for docker image.')
     parser_deploy.add_argument('--service-name',
                                type=str,
@@ -40,6 +37,14 @@ def main() -> None:
                               action='store_true',
                               dest='clean_stale_tasks',
                               help='Cleans all stale tasks and leave only active revisions.')
+    parser_clean.add_argument('--stale-log-streams',
+                              action='store_true',
+                              dest='clean_stale_log_streams',
+                              help='Cleans all stale log streams and leave only active revisions.')
+    parser_clean.add_argument('--days-ago',
+                              type=int,
+                              dest='log_stream_days_ago',
+                              help='Timedelta for deleting stale log streams.')
 
     # Main command
     parser.add_argument('--logging-level',
@@ -52,6 +57,10 @@ def main() -> None:
                         action='version',
                         dest='version',
                         version='{version}'.format(version=__version__))
+    parser.add_argument('--path',
+                        type=str,
+                        dest='config_path',
+                        help='Config path that includes service definitions.')
 
     args = parser.parse_args()
 
@@ -61,28 +70,34 @@ def main() -> None:
     # Setup logger
     setup_logging(args.logging_level)
 
+    # Create config dict, first.
+    config_path = Path(args.config_path)
+
     # Clean stale tasks and exit.
     if args.subparser_name == 'clean':
         if args.clean_stale_tasks:
             task.clean_stale_tasks()
             return
 
-    if args.subparser_name == 'deploy':
-        # Create config dict, first.
-        config_path = Path(args.deploy_config_path)
-        services = _load_config(config_path, args.deploy_image_url)
+        if args.clean_stale_log_streams:
+            services = _load_config(config_path)
+            log.clean_stale_log_streams(services, args.log_stream_days_ago)
+            return
 
+    if args.subparser_name == 'deploy':
+        services = _load_config(config_path, args.deploy_image_url)
         # Validate definitions
+        # TODO: Call this check inside _load_config function.
         if not _is_valid_config(services):
             logger.error('Config is not valid!')
             raise AeropressException()
 
-        logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.deploy_config_path)
+        logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.config_path)
         deploy(services, args.deploy_service_name)
         return
 
 
-def _load_config(root_path: Path, image_url: str) -> list:
+def _load_config(root_path: Path, image_url: str = None) -> list:
     logger.info('Reading yaml config files from %s', root_path)
 
     services = []  # type: List[Dict[str, Any]]

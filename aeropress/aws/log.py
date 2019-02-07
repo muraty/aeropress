@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+from typing import List, Any, Dict  # noqa
+
 import boto3
 
 from aeropress import logger
@@ -17,6 +20,155 @@ def clean_stale_log_groups(stale_log_group_names: set) -> None:
         logger.info('Cleaning stale log group: %s', stale_log_group_name)
         response = logs_client.delete_log_group(logGroupName=stale_log_group_name)
         logger.debug('Clean stale log group details: %s', response)
+
+
+def clean_stale_log_streams(services: list, days_ago: int) -> None:
+    # Retrieve existing log streams.
+    existing_logs = _get_existing_logs(services)
+
+    # Extract container id from log stream names.
+    container_instance_ids = _get_container_ids(existing_logs)
+
+    # Retrieve failed contaniner instances.
+    cluster_name = services[0]['cluster']  # We assume that, all services are in the same cluster.
+    failed_container_ids = _get_failed_container_ids(cluster_name, container_instance_ids)
+    logger.info('Failed container count: %s', len(failed_container_ids))
+
+    _delete_log_streams(existing_logs, failed_container_ids, days_ago)
+
+
+def _get_container_ids(existing_logs: list) -> list:
+    """
+    Extract container-id from existing logs and store them inside a list.
+    """
+    container_instance_ids = []  # type: List[str]
+
+    for existing_log in existing_logs:
+        for existing_log_stream in existing_log['log_streams']:
+            log_stream_name = existing_log_stream['logStreamName']
+            # Example log stream name: 'ecs/container-foo/XXXXXXX-YYYY-WWWW-ZZZZ-XXXXXXXX'
+            container_id = log_stream_name.split('/')[-1]
+            container_instance_ids.append(container_id)
+
+    return container_instance_ids
+
+
+def _delete_log_streams(existing_logs: list, failed_container_ids: list, days_ago: int) -> None:
+    """
+    Delete log streams that are older than given days_ago and their container are not running anymore.
+    """
+    deleted_count = 0
+    for existing_log in existing_logs:
+        existing_log_streams = existing_log['log_streams']
+        existing_log_group_name = existing_log['log_group_name']
+        for existing_log_stream in existing_log_streams:
+            # Example log stream name: 'ecs/container-foo/XXXXXXX-YYYY-WWWW-ZZZZ-XXXXXXXX'
+            container_id = existing_log_stream['logStreamName'].split('/')[-1]
+            if container_id not in failed_container_ids:
+                continue
+
+            # TODO: Handle creation time here.
+            last_event_timestamp = existing_log_stream.get('lastEventTimestamp')
+            if not last_event_timestamp:
+                continue
+
+            # AWS returns timestamp in milliseconds.
+            last_event_datetime = datetime.fromtimestamp(last_event_timestamp / 1000)
+            if datetime.utcnow() - timedelta(days=days_ago) < last_event_datetime:
+                continue
+
+            logger.info('Deleting log stream: %s of log group %s. Last event time: %s',
+                        existing_log_stream['logStreamName'],
+                        existing_log_group_name,
+                        last_event_datetime)
+
+            response = logs_client.delete_log_stream(
+                logGroupName=existing_log_group_name,
+                logStreamName=existing_log_stream['logStreamName'],
+            )
+            deleted_count += 1
+            logger.debug('Deleted log stream: %s', response)
+
+    logger.info('Deleted %s stale log streams.', deleted_count)
+
+
+def _get_failed_container_ids(cluster_name: str, container_instance_ids: list) -> list:
+    ecs_client = boto3.client('ecs', region_name='eu-west-1')
+    start = 0
+    end = 100
+    failed_container_ids = []
+    while True:
+        resp = ecs_client.describe_container_instances(cluster=cluster_name,
+                                                       containerInstances=container_instance_ids[start:end])
+
+        for failure in resp.get('failures', []):
+            # Example arn: 'arn:aws:ecs:eu-west-1:000000000:container-instance/XXXXX-WWWW-XXXX-ZZZZ-YYYY'
+            container_id = failure['arn'].split('/')[-1]
+            failed_container_ids.append(container_id)
+
+        if end >= len(container_instance_ids):
+            break
+
+        if end + 100 >= len(container_instance_ids):
+            start = end
+            end = len(container_instance_ids)
+        else:
+            start = end
+            end = end + 100
+
+    return failed_container_ids
+
+
+def _get_existing_logs(services: list) -> list:
+    """
+    Return List of log group names grouped by log group names
+    Example:
+    [
+        {'name': 'log-group-1',
+         'log_streams': [
+            {'arn': 'arn:aws:logs:eu-west-1:00000:log-group:log-group-1:log-stream:ecs/container-foo/XXX',
+             'creationTime': 1548674449535,
+             'firstEventTimestamp': 1548674517172,
+             'lastEventTimestamp': 1548681757955,
+             'lastIngestionTime': 1548681758533,
+             'logStreamName': 'ecs/container-foo/XXX',
+             'storedBytes': 0,
+             'uploadSequenceToken': 'YYY'}]
+            },
+    ]
+    """
+    log_group_names = []
+    for service_dict in services:
+        for container_definition in service_dict['task']['containerDefinitions']:
+            log_group_names.append(container_definition['logConfiguration']['options']['awslogs-group'])
+
+    # Existing log streams of all ecs log groups.
+    existing_log_streams = []  # type: List[Dict[str, Any]]
+    for log_group_name in log_group_names:
+        next_token = None
+        log_streams = []  # type: List[Dict[str, Any]]
+        while True:
+            if next_token:
+                resp = logs_client.describe_log_streams(logStreamNamePrefix='ecs',
+                                                        logGroupName=log_group_name,
+                                                        nextToken=next_token,
+                                                        limit=50)
+            else:
+                resp = logs_client.describe_log_streams(logStreamNamePrefix='ecs',
+                                                        logGroupName=log_group_name,
+                                                        limit=50)
+
+                log_streams.extend(resp['logStreams'])
+
+            next_token = resp.get('nextToken')
+
+            # All log streams are loaded.
+            if not next_token:
+                break
+
+        existing_log_streams.append({'log_group_name': log_group_name, 'log_streams': log_streams})
+
+    return existing_log_streams
 
 
 def get_existing_log_group_names() -> set:

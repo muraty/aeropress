@@ -32,6 +32,7 @@ def register_all(tasks: list, clean_stale: bool) -> None:
     _register_task_definitions(tasks)
 
 
+# TODO: Do not delete a task if it is still being used by a service.
 def clean_stale_tasks() -> None:
     """
     Clean stale tasks. Leave only active revision.
