@@ -76,22 +76,18 @@ def main() -> None:
     # Clean stale tasks and exit.
     if args.subparser_name == 'clean':
         if args.clean_stale_tasks:
+            logger.info('Cleaning stale tasks...')
             task.clean_stale_tasks()
             return
 
         if args.clean_stale_log_streams:
             services = _load_config(config_path)
+            logger.info('Cleaning stale log streams from starting %s day(s) ago...', args.log_stream_days_ago)
             log.clean_stale_log_streams(services, args.log_stream_days_ago)
             return
 
     if args.subparser_name == 'deploy':
         services = _load_config(config_path, args.deploy_image_url)
-        # Validate definitions
-        # TODO: Call this check inside _load_config function.
-        if not _is_valid_config(services):
-            logger.error('Config is not valid!')
-            raise AeropressException()
-
         logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.config_path)
         deploy(services, args.deploy_service_name)
         return
@@ -121,6 +117,11 @@ def _load_config(root_path: Path, image_url: str = None) -> list:
                         container_definition['image'] = image_url
 
                 services.append(value)
+
+    # Validate definitions
+    if not _is_valid_config(services):
+        logger.error('Config is not valid!')
+        raise AeropressException()
 
     return services
 
