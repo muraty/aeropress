@@ -67,13 +67,13 @@ def _delete_log_streams(existing_logs: list, failed_container_ids: list, days_ag
             if container_id not in failed_container_ids:
                 continue
 
-            # TODO: Handle creation time here.
-            last_event_timestamp = existing_log_stream.get('lastEventTimestamp')
-            if not last_event_timestamp:
+            last_event_time = existing_log_stream.get('lastEventTimestamp', existing_log_stream.get('creationTime'))
+            if not last_event_time:
+                logger.warning('Neither creation time nor last event time is known! %s', existing_log_stream)
                 continue
 
             # AWS returns timestamp in milliseconds.
-            last_event_datetime = datetime.fromtimestamp(last_event_timestamp / 1000)
+            last_event_datetime = datetime.fromtimestamp(last_event_time / 1000)
             if datetime.utcnow() - timedelta(days=days_ago) < last_event_datetime:
                 continue
 
