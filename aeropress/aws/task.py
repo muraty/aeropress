@@ -22,6 +22,15 @@ def register_all(tasks: list, clean_stale: bool) -> None:
     missing_log_group_names = defined_log_group_names.difference(existing_log_group_names)
     create_missing_log_groups(missing_log_group_names)
 
+    # TODO: Make this inside log.py
+    # Set retention policy to 7 days.
+    log_client = boto3.client('logs', region_name='eu-west-1')
+    retention_days = 7  # TODO: Should be configurable
+    for log_group_name in defined_log_group_names:
+        logger.info('Setting retention days to %s for log group: %s ', retention_days, log_group_name)
+        response = log_client.put_retention_policy(logGroupName=log_group_name, retentionInDays=retention_days)
+        logger.debug('Set retetion days to %s. Response: %s', retention_days, response)
+
     # Delete stale log groups
     if clean_stale:
         # TODO: Make this inside log.py
