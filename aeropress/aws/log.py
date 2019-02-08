@@ -59,7 +59,7 @@ def _clean_stale_log_groups(stale_log_group_names: set) -> None:
         logger.debug('Clean stale log group details: %s', response)
 
 
-def _clean_stale_log_streams(services: list, days_ago: int) -> None:
+def clean_stale_log_streams(services: list, days_ago: int) -> None:
     # Retrieve existing log streams.
     existing_logs = _get_existing_logs(services)
 
