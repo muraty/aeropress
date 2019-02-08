@@ -26,7 +26,6 @@ Usage
 
   $ aeropress --help
   usage: cli.py [-h] [--logging-level {debug,info,warning,error}] [--version]
-                [--path CONFIG_PATH]
                 {deploy,clean} ...
 
   aeropress AWS ECS deployment helper
@@ -41,7 +40,6 @@ Usage
     --logging-level {debug,info,warning,error}
                           Print debug logs
     --version             show program's version number and exit
-    --path CONFIG_PATH    Config path that includes service definitions.
 
 Example
 -------
