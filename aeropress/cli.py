@@ -31,6 +31,10 @@ def main() -> None:
                                default='all',
                                dest='deploy_service_name',
                                help='Service name that will be updated. If not present, all services will be updated')
+    parser_deploy.add_argument('--path',
+                               type=str,
+                               dest='config_path',
+                               help='Config path that includes service definitions.')
 
     # clean sub command
     parser_clean.add_argument('--stale-tasks',
@@ -45,6 +49,10 @@ def main() -> None:
                               type=int,
                               dest='log_stream_days_ago',
                               help='Timedelta for deleting stale log streams.')
+    parser_clean.add_argument('--path',
+                              type=str,
+                              dest='config_path',
+                              help='Config path that includes service definitions.')
 
     # Main command
     parser.add_argument('--logging-level',
@@ -57,11 +65,6 @@ def main() -> None:
                         action='version',
                         dest='version',
                         version='{version}'.format(version=__version__))
-    parser.add_argument('--path',
-                        type=str,
-                        dest='config_path',
-                        help='Config path that includes service definitions.')
-
     args = parser.parse_args()
 
     # TODO:
