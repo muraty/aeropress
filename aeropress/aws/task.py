@@ -1,7 +1,7 @@
 import boto3
 from typing import List, Dict, Any  # noqa
 
-from aeropress.aws.log import get_existing_log_group_names, create_missing_log_groups, clean_stale_log_groups
+from aeropress.aws.log import handle_logs
 from aeropress import logger
 from aeropress import AeropressException
 
@@ -12,30 +12,8 @@ def register_all(tasks: list, clean_stale: bool) -> None:
     # First, validate log definitions.
     _validate_log_definitions(tasks)
 
-    # Prepare log groups
-    # TODO: Make this inside log.py
-    defined_log_group_names = _get_defined_log_group_names(tasks)
-    existing_log_group_names = get_existing_log_group_names()
-
-    # Create missing log groups
-    # TODO: Make this inside log.py
-    missing_log_group_names = defined_log_group_names.difference(existing_log_group_names)
-    create_missing_log_groups(missing_log_group_names)
-
-    # TODO: Make this inside log.py
-    # Set retention policy to 7 days.
-    log_client = boto3.client('logs', region_name='eu-west-1')
-    retention_days = 7  # TODO: Should be configurable
-    for log_group_name in defined_log_group_names:
-        logger.info('Setting retention days to %s for log group: %s ', retention_days, log_group_name)
-        response = log_client.put_retention_policy(logGroupName=log_group_name, retentionInDays=retention_days)
-        logger.debug('Set retetion days to %s. Response: %s', retention_days, response)
-
-    # Delete stale log groups
-    if clean_stale:
-        # TODO: Make this inside log.py
-        stale_log_group_names = existing_log_group_names.difference(defined_log_group_names)
-        clean_stale_log_groups(stale_log_group_names)
+    # Handle logs; create missing log groups, set retention days, clean stale log groups if necessary.
+    handle_logs(tasks, clean_stale_log_groups=clean_stale)
 
     # Register task definitions
     _register_task_definitions(tasks)
@@ -148,18 +126,3 @@ def _validate_log_definitions(tasks: list) -> None:
             if options['awslogs-stream-prefix'] != 'ecs':
                 logger.error("logstream prefixes must be 'ecs' : %s", options)
                 raise AeropressException()
-
-
-def _get_defined_log_group_names(tasks: list) -> set:
-    defined_group_names = set()
-    for task_dict in tasks:
-        for container_definition in task_dict['containerDefinitions']:
-            if not container_definition.get('logConfiguration'):
-                continue
-
-            if not container_definition['logConfiguration'].get('options'):
-                continue
-
-            defined_group_names.add(container_definition['logConfiguration']['options']['awslogs-group'])
-
-    return defined_group_names

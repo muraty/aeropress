@@ -8,21 +8,58 @@ from aeropress import logger
 logs_client = boto3.client('logs', region_name='eu-west-1')
 
 
-def create_missing_log_groups(missing_log_group_names: set) -> None:
+def handle_logs(tasks: list, clean_stale_log_groups: bool = False) -> None:
+    # Prepare log groups
+    defined_log_group_names = _get_defined_log_group_names(tasks)
+    existing_log_group_names = _get_existing_log_group_names()
+
+    # Create missing log groups
+    missing_log_group_names = defined_log_group_names.difference(existing_log_group_names)
+    _create_missing_log_groups(missing_log_group_names)
+
+    # Set retention policy to 7 days.
+    retention_days = 7  # TODO: Should be configurable
+    for log_group_name in defined_log_group_names:
+        logger.info('Setting retention days to %s for log group: %s ', retention_days, log_group_name)
+        response = logs_client.put_retention_policy(logGroupName=log_group_name, retentionInDays=retention_days)
+        logger.debug('Set retetion days to %s. Response: %s', retention_days, response)
+
+    # Clean stale log groups.
+    if clean_stale_log_groups:
+        stale_log_group_names = existing_log_group_names.difference(defined_log_group_names)
+        _clean_stale_log_groups(stale_log_group_names)
+
+
+def _get_defined_log_group_names(tasks: list) -> set:
+    defined_group_names = set()
+    for task_dict in tasks:
+        for container_definition in task_dict['containerDefinitions']:
+            if not container_definition.get('logConfiguration'):
+                continue
+
+            if not container_definition['logConfiguration'].get('options'):
+                continue
+
+            defined_group_names.add(container_definition['logConfiguration']['options']['awslogs-group'])
+
+    return defined_group_names
+
+
+def _create_missing_log_groups(missing_log_group_names: set) -> None:
     for missing_log_group_name in missing_log_group_names:
         logger.info('Creating log group: %s', missing_log_group_name)
         response = logs_client.create_log_group(logGroupName=missing_log_group_name)
         logger.debug('Created log group details: %s', response)
 
 
-def clean_stale_log_groups(stale_log_group_names: set) -> None:
+def _clean_stale_log_groups(stale_log_group_names: set) -> None:
     for stale_log_group_name in stale_log_group_names:
         logger.info('Cleaning stale log group: %s', stale_log_group_name)
         response = logs_client.delete_log_group(logGroupName=stale_log_group_name)
         logger.debug('Clean stale log group details: %s', response)
 
 
-def clean_stale_log_streams(services: list, days_ago: int) -> None:
+def _clean_stale_log_streams(services: list, days_ago: int) -> None:
     # Retrieve existing log streams.
     existing_logs = _get_existing_logs(services)
 
@@ -171,7 +208,7 @@ def _get_existing_logs(services: list) -> list:
     return existing_log_streams
 
 
-def get_existing_log_group_names() -> set:
+def _get_existing_log_group_names() -> set:
     existing_group_names = set()
     next_token = None
     while True:
