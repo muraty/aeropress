@@ -4,7 +4,7 @@ import boto3
 
 from aeropress import logger
 
-scaling_client = boto3.client('application-autoscaling', region_name='eu-west-1')
+scaling_client = boto3.client('application-autoscaling')
 
 
 def create_scaling_policies(services: list, clean_stale: bool) -> None:

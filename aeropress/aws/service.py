@@ -5,7 +5,7 @@ from aeropress.aws.alarm import create_scaling_alarms
 from aeropress.aws.scale import create_scaling_policies, register_scalable_targets
 from aeropress import logger
 
-ecs_client = boto3.client('ecs', region_name='eu-west-1')
+ecs_client = boto3.client('ecs')
 
 
 def update_all(services: list, clean_stale: bool) -> None:

@@ -5,7 +5,7 @@ from aeropress.aws.log import handle_logs
 from aeropress import logger
 from aeropress import AeropressException
 
-ecs_client = boto3.client('ecs', region_name='eu-west-1')
+ecs_client = boto3.client('ecs')
 
 
 def register_all(tasks: list, clean_stale: bool) -> None:

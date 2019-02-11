@@ -4,7 +4,7 @@ import boto3
 
 from aeropress import logger
 
-cloudwatch_client = boto3.client('cloudwatch', region_name='eu-west-1')
+cloudwatch_client = boto3.client('cloudwatch')
 
 
 def create_metrics(services: list) -> None:

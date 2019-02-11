@@ -6,7 +6,7 @@ from aeropress.aws.scale import get_existing_scaling_policies
 from aeropress import logger
 from aeropress import AeropressException
 
-cloudwatch_client = boto3.client('cloudwatch', region_name='eu-west-1')
+cloudwatch_client = boto3.client('cloudwatch')
 
 
 def create_scaling_alarms(services: list, clean_stale: bool) -> None:

@@ -2,7 +2,7 @@ import boto3
 
 from aeropress import logger
 
-ecs_client = boto3.client('ecs', region_name='eu-west-1')
+ecs_client = boto3.client('ecs')
 
 
 def create(cluster_name: str) -> None:

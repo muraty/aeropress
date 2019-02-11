@@ -67,9 +67,6 @@ def main() -> None:
                         version='{version}'.format(version=__version__))
     args = parser.parse_args()
 
-    # TODO:
-    # region_name param
-
     # Setup logger
     setup_logging(args.logging_level)
 

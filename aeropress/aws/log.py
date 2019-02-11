@@ -5,7 +5,7 @@ import boto3
 
 from aeropress import logger
 
-logs_client = boto3.client('logs', region_name='eu-west-1')
+logs_client = boto3.client('logs')
 
 
 def handle_logs(tasks: list, clean_stale_log_groups: bool = False) -> None:
@@ -130,7 +130,7 @@ def _delete_log_streams(existing_logs: list, failed_container_ids: list, days_ag
 
 
 def _get_failed_container_ids(cluster_name: str, container_instance_ids: list) -> list:
-    ecs_client = boto3.client('ecs', region_name='eu-west-1')
+    ecs_client = boto3.client('ecs')
     start = 0
     end = 100
     failed_container_ids = []
