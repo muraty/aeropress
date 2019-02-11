@@ -57,7 +57,7 @@ service:
           AdjustmentType: ExactCapacity
           Cooldown: 60
           StepAdjustments:
-              - MetricIntervalLowerBound: 0
+              - MetricIntervalUpperBound: -100
                 ScalingAdjustment: 1
   task:
     family: task-foo
