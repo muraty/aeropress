@@ -19,6 +19,8 @@ def main() -> None:
                                           help='Deploy docker image to ECS.')
     parser_clean = subparsers.add_parser('clean',
                                          help='Clean commands for stale entitites on AWS.')
+    parser_register = subparsers.add_parser('register',
+                                            help='Register tasks on ECS.')
 
     # deploy subcommand
     parser_deploy.add_argument('--image-url',
@@ -52,7 +54,22 @@ def main() -> None:
     parser_clean.add_argument('--path',
                               type=str,
                               dest='config_path',
-                              help='Config path that includes service definitions.')
+                              help='Config path that includes service & task definitions.')
+
+    # register sub command
+    parser_register.add_argument('--task-definition',
+                                 type=str,
+                                 dest='task_definition',
+                                 help='Task definition that will be registered.')
+    parser_register.add_argument('--path',
+                                 type=str,
+                                 dest='config_path',
+                                 help='Config path that includes service & task definitions.')
+    parser_register.add_argument('--image-url',
+                                 type=str,
+                                 dest='image_url',
+                                 default=None,
+                                 help='Image URL for docker image.')
 
     # Main command
     parser.add_argument('--logging-level',
@@ -90,6 +107,23 @@ def main() -> None:
         services = _load_config(config_path, args.deploy_image_url)
         logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.config_path)
         deploy(services, args.deploy_service_name)
+        return
+
+    if args.subparser_name == 'register':
+        services = _load_config(config_path, args.image_url)
+
+        task_dict = None
+        for service_dict in services:
+            if args.task_definition == service_dict['task']['family']:
+                task_dict = service_dict['task']
+                break
+
+        if not task_dict:
+            logger.error('Could not find task definition %s on %s', args.task_definition, args.config_path)
+            return
+
+        logger.info("Registering task definition '%s' fom path: %s", args.task_definition, args.config_path)
+        task.register_all([task_dict], False)
         return
 
 
@@ -133,6 +167,10 @@ def _is_valid_config(services: list) -> bool:
         return False
 
     for service_dict in services:
+        # We might run only one task with run-task.
+        if not service_dict.get('taskDefinition'):
+            continue
+
         if service_dict['taskDefinition'] != service_dict['task']['family']:
             logger.error('Task definition is not found for service %s!', service_dict['serviceName'])
             return False
