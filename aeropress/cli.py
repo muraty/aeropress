@@ -70,6 +70,12 @@ def main() -> None:
                                  dest='image_url',
                                  default=None,
                                  help='Image URL for docker image.')
+    parser_register.add_argument('--entrypoint',
+                                 type=str,
+                                 dest='entrypoint',
+                                 default=[],
+                                 nargs='+',
+                                 help='Container entrypoint. Must be list of strings.')
 
     # Main command
     parser.add_argument('--logging-level',
@@ -110,7 +116,7 @@ def main() -> None:
         return
 
     if args.subparser_name == 'register':
-        services = _load_config(config_path, args.image_url)
+        services = _load_config(config_path, args.image_url, args.entrypoint)
 
         task_dict = None
         for service_dict in services:
@@ -127,7 +133,7 @@ def main() -> None:
         return
 
 
-def _load_config(root_path: Path, image_url: str = None) -> list:
+def _load_config(root_path: Path, image_url: str = None, entrypoint: list = []) -> list:
     logger.info('Reading yaml config files from %s', root_path)
 
     services = []  # type: List[Dict[str, Any]]
@@ -145,10 +151,13 @@ def _load_config(root_path: Path, image_url: str = None) -> list:
                     if service_k != 'task':
                         continue
 
-                    # Inject image-url into container definitions.
+                    # Override defaults for container definitions.
                     for container_definition in service_v['containerDefinitions']:
-                        # TODO: Check default. If there is an image-url already, do not inject this!
-                        container_definition['image'] = image_url
+                        if image_url:
+                            container_definition['image'] = image_url
+
+                        if entrypoint:
+                            container_definition['entryPoint'] = entrypoint
 
                 services.append(value)
 
