@@ -201,6 +201,9 @@ def deploy(services: list, service_name: str) -> None:
     # Register task definitions.
     task.register_all(tasks, clean_stale)
 
+    # We might have tasks without services.
+    services = [service_dict for service_dict in services if service_dict.get('serviceName')]
+
     # Update all services (Create if not exists.)
     service.update_all(services, clean_stale)
 
