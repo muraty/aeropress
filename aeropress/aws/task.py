@@ -93,7 +93,7 @@ def _register_task_definitions(tasks: list) -> None:
                 'image': container_definition['image'],
                 'logConfiguration': container_definition['logConfiguration'],
                 'memoryReservation': container_definition['memoryReservation'],
-                'cpu': container_definition.get('cpu'),
+                'cpu': container_definition.get('cpu', 0),
                 'entryPoint': container_definition['entryPoint'],
                 'environment': container_definition['environment'],
             })
