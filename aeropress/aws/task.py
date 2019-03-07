@@ -94,8 +94,9 @@ def _register_task_definitions(tasks: list) -> None:
                 'logConfiguration': container_definition['logConfiguration'],
                 'memoryReservation': container_definition['memoryReservation'],
                 'cpu': container_definition.get('cpu', 0),
-                'entryPoint': container_definition['entryPoint'],
-                'environment': container_definition['environment'],
+                'entryPoint': container_definition.get('entryPoint', []),
+                'environment': container_definition.get('environment', []),
+                'portMappings': container_definition.get('portMappings', []),
             })
 
         logger.info('Creating task definition: %s', task_dict['family'])
