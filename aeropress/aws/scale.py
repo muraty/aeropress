@@ -46,6 +46,12 @@ def _create_or_update_all_policies(services: list, existing_policies: list) -> N
     for service_dict in services:
         resource_id = 'service/' + service_dict['cluster'] + '/' + service_dict['serviceName']
 
+        if not service_dict.get('scale'):
+            continue
+
+        if not service_dict['scale'].get('policies'):
+            continue
+
         # Create or update the policies.
         for policy_dict in service_dict['scale']['policies']:
             logger.info('Crating scaling policy: %s for %s', policy_dict['PolicyName'], resource_id)
