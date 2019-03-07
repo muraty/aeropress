@@ -28,10 +28,9 @@ def main() -> None:
                                dest='deploy_image_url',
                                default=None,
                                help='Image URL for docker image.')
-    parser_deploy.add_argument('--service-name',
-                               type=str,
-                               default='all',
-                               dest='deploy_service_name',
+    parser_deploy.add_argument('--service-names',
+                               nargs='+',
+                               dest='deploy_service_names',
                                help='Service name that will be updated. If not present, all services will be updated')
     parser_deploy.add_argument('--path',
                                type=str,
@@ -112,7 +111,7 @@ def main() -> None:
     if args.subparser_name == 'deploy':
         services = _load_config(config_path, args.deploy_image_url)
         logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.config_path)
-        deploy(services, args.deploy_service_name)
+        deploy(services, args.deploy_service_names)
         return
 
     if args.subparser_name == 'register':
@@ -125,7 +124,7 @@ def main() -> None:
                 break
 
         if not task_dict:
-            logger.error('Could not find task definition %s on %s', args.task_definition, args.config_path)
+            logger.error("Could not find task definition '%s' on '%s'", args.task_definition, args.config_path)
             return
 
         logger.info("Registering task definition '%s' fom path: %s", args.task_definition, args.config_path)
@@ -187,34 +186,35 @@ def _is_valid_config(services: list) -> bool:
     return True
 
 
-def deploy(services: list, service_name: str) -> None:
-    if service_name == 'all':
-        clean_stale = True
-        tasks = [service_dict['task'] for service_dict in services]
-    else:
-        clean_stale = False
-        selected_service = {}  # type: Dict[str, Any]
-        for service_dict in services:
-            if service_dict['serviceName'] == service_name:
-                selected_service = service_dict.copy()
-                break
+def _find_service(service_name: str, services: list) -> Dict:
+    for service_dict in services:
+        if not service_dict.get('serviceName'):
+            continue
 
-        if not selected_service:
-            service_names = '\n'.join([service_dict['serviceName'] for service_dict in services])
-            logger.error("Given service %s is not found! Valid service names: %s ", service_name, service_names)
+        if service_dict['serviceName'] == service_name:
+            return service_dict.copy()
+
+    return {}
+
+
+def deploy(services: list, service_names: list) -> None:
+    selected_services = []  # type: List[Dict[str, Any]]
+    for service_name in service_names:
+        service_dict = _find_service(service_name, services)
+
+        if not service_dict:
+            logger.error("Service '%s' is not found! ", service_name)
             raise AeropressException()
 
-        tasks = [selected_service['task']]
-        services = [selected_service]
+        selected_services.append(service_dict)
 
     # Register task definitions.
-    task.register_all(tasks, clean_stale)
+    tasks = [selected_service['task'] for selected_service in selected_services]
+    task.register_all(tasks)
 
-    # We might have tasks without services.
-    services = [service_dict for service_dict in services if service_dict.get('serviceName')]
-
-    # Update all services (Create if not exists.)
-    service.update_all(services, clean_stale)
+    # Update or create all services. (We might have tasks without services, eliminating them..)
+    filtered_selected_services = [sd for sd in selected_services if sd.get('serviceName')]
+    service.update_all(filtered_selected_services)
 
 
 def setup_logging(level: str) -> None:

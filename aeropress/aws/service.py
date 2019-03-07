@@ -8,7 +8,7 @@ from aeropress import logger
 ecs_client = boto3.client('ecs')
 
 
-def update_all(services: list, clean_stale: bool) -> None:
+def update_all(services: list, clean_stale: bool = False) -> None:
     # TODO: Add cluster check.
 
     # Create missing services

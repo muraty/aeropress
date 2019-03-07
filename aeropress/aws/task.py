@@ -8,7 +8,7 @@ from aeropress import AeropressException
 ecs_client = boto3.client('ecs')
 
 
-def register_all(tasks: list, clean_stale: bool) -> None:
+def register_all(tasks: list, clean_stale: bool = False) -> None:
     # First, validate log definitions.
     _validate_log_definitions(tasks)
 
