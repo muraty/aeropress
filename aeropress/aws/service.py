@@ -74,6 +74,8 @@ def _create_missing_services(services: list) -> None:
             launchType=service_dict['launchType'],
             schedulingStrategy=service_dict['schedulingStrategy'],
             deploymentController=service_dict['deploymentController'],
+            loadBalancers=service_dict.get('loadBalancers', []),
+            healthCheckGracePeriodSeconds=service_dict.get('healthCheckGracePeriodSeconds', 0),
         )
         logger.debug('Created service details: %s', response)
 
