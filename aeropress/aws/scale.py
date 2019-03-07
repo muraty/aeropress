@@ -70,6 +70,12 @@ def _is_stale_policy(existing_policy_dict: dict, services: list) -> bool:
     for service_dict in services:
         resource_id = 'service/' + service_dict['cluster'] + '/' + service_dict['serviceName']
 
+        if not service_dict.get('scale'):
+            continue
+
+        if not service_dict['scale'].get('policies'):
+            continue
+
         for defined_policy_dict in service_dict['scale']['policies']:
             if existing_policy_dict['PolicyName'] != defined_policy_dict['PolicyName']:
                 continue
