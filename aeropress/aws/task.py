@@ -97,6 +97,7 @@ def _register_task_definitions(tasks: list) -> None:
                 'entryPoint': container_definition.get('entryPoint', []),
                 'environment': container_definition.get('environment', []),
                 'portMappings': container_definition.get('portMappings', []),
+                'ulimits': container_definition.get('ulimits', []),
             })
 
         logger.info('Creating task definition: %s', task_dict['family'])
