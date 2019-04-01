@@ -66,19 +66,22 @@ def _create_missing_services(services: list) -> None:
     # Create missing services.
     for service_dict in missing_services:
         logger.info('Creating service: %s', service_dict['serviceName'])
-        response = ecs_client.create_service(
-            cluster=service_dict['cluster'],
-            serviceName=service_dict['serviceName'],
-            taskDefinition=service_dict['taskDefinition'],
-            desiredCount=service_dict['desiredCount'],
-            launchType=service_dict['launchType'],
-            schedulingStrategy=service_dict['schedulingStrategy'],
-            deploymentController=service_dict['deploymentController'],
-            loadBalancers=service_dict.get('loadBalancers', []),
-            healthCheckGracePeriodSeconds=service_dict.get('healthCheckGracePeriodSeconds', 0),
-            placementConstraints=service_dict.get('placementConstraints', []),
-            placementStrategy=service_dict.get('placementStrategy', []),
-        )
+        params = {
+            'cluster': service_dict['cluster'],
+            'serviceName': service_dict['serviceName'],
+            'taskDefinition': service_dict['taskDefinition'],
+            'desiredCount': service_dict['desiredCount'],
+            'launchType': service_dict['launchType'],
+            'schedulingStrategy': service_dict['schedulingStrategy'],
+            'deploymentController': service_dict['deploymentController'],
+            'loadBalancers': service_dict.get('loadBalancers', []),
+            'placementConstraints': service_dict.get('placementConstraints', []),
+            'placementStrategy': service_dict.get('placementStrategy', []),
+        }
+        if service_dict.get('healthCheckGracePeriodSeconds'):
+            params['healthCheckGracePeriodSeconds'] = service_dict.get('healthCheckGracePeriodSeconds')
+
+        response = ecs_client.create_service(**params)
         logger.debug('Created service details: %s', response)
 
 
