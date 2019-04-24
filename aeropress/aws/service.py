@@ -77,6 +77,7 @@ def _create_missing_services(services: list) -> None:
             'loadBalancers': service_dict.get('loadBalancers', []),
             'placementConstraints': service_dict.get('placementConstraints', []),
             'placementStrategy': service_dict.get('placementStrategy', []),
+            'deploymentConfiguration': service_dict.get('deploymentConfiguration', {}),
         }
         if service_dict.get('healthCheckGracePeriodSeconds'):
             params['healthCheckGracePeriodSeconds'] = service_dict.get('healthCheckGracePeriodSeconds')
@@ -95,6 +96,7 @@ def _update_services(services: list) -> None:
             service=service_dict['serviceName'],
             desiredCount=service_dict['desiredCount'],
             taskDefinition=service_dict['taskDefinition'],
+            deploymentConfiguration=service_dict.get('deploymentConfiguration', {}),
             forceNewDeployment=True,
         )
         logger.debug('Updated service details: %s', response)
