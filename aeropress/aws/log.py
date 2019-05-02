@@ -139,7 +139,9 @@ def _get_failed_container_ids(cluster_name: str, container_instance_ids: list) -
                                                        containerInstances=container_instance_ids[start:end])
 
         for failure in resp.get('failures', []):
-            # Example arn: 'arn:aws:ecs:eu-west-1:000000000:container-instance/XXXXX-WWWW-XXXX-ZZZZ-YYYY'
+            # Example arn:
+            # Old Style :'arn:aws:ecs:eu-west-1:000000000:container-instance/XXXXX-WWWW-XXXX-ZZZZ-YYYY'
+            # New Style :'arn:aws:ecs:eu-west-1:000000000:container-instance/<cluster-name>/XXXXX-WWWW-XXXX-ZZZZ-YYYY'
             container_id = failure['arn'].split('/')[-1]
             failed_container_ids.append(container_id)
 

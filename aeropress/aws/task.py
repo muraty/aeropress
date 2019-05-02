@@ -34,7 +34,9 @@ def clean_stale_tasks() -> None:
             resp = ecs_client.list_task_definitions(status='ACTIVE', maxResults=100)
 
         for task_definition_arn in resp['taskDefinitionArns']:
-            # Example arn: 'arn:aws:ecs:eu-west-00000000:task-definition/task-foo:23'
+            # Example arn:
+            # Old Style: 'arn:aws:ecs:eu-west-00000000:task-definition/task-foo:23'
+            # New Style: 'arn:aws:ecs:eu-west-00000000:task-definition/<cluster-name>/task-foo:23'
             parts = task_definition_arn.split(':')
             name = parts[-2].split('/')[1]
             revision = int(parts[-1])

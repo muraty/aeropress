@@ -44,7 +44,9 @@ def _get_existing_services(services: list) -> list:
                 resp = ecs_client.list_services(cluster=cluster_name, maxResults=100)
             service_arns = resp['serviceArns']
             # Put only service name, not full arn.
-            # Example service_arn: arn:aws:ecs:eu-west-1:0000000000:service/service-foo
+            # Example service_arn
+            # Old style: arn:aws:ecs:eu-west-1:0000000000:service/service-foo
+            # New style: arn:aws:ecs:eu-west-1:0000000000:service/<cluster-name>/service-foo
             existing_services.extend([service_arn.split('/')[-1] for service_arn in service_arns])
 
             next_token = resp.get('nextToken')
