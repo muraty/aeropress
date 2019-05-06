@@ -1,5 +1,6 @@
 import boto3
-from typing import List, Dict, Any  # noqa
+from typing import List, Dict, Any, Generator  # noqa
+from collections import defaultdict
 
 from aeropress.aws.log import handle_logs
 from aeropress import logger
@@ -19,12 +20,52 @@ def register_all(tasks: list, clean_stale: bool = False) -> None:
     _register_task_definitions(tasks)
 
 
-# TODO: Do not delete a task if it is still being used by a service.
+# TODO: DRY -> duplicate with get_existing_services
+def _retrieve_service_task_definitions() -> list:
+    cluster_service_dict = defaultdict(list)  # type: Dict[str, List[str]]
+
+    cluster_arns = ecs_client.list_clusters()['clusterArns']
+
+    # Retrieve all services.
+    for cluster_arn in cluster_arns:
+        next_token = None
+        while True:
+            if next_token:
+                resp = ecs_client.list_services(cluster=cluster_arn, maxResults=100, nextToken=next_token)
+            else:
+                resp = ecs_client.list_services(cluster=cluster_arn, maxResults=100)
+
+            cluster_service_dict[cluster_arn].extend(resp['serviceArns'])
+
+            next_token = resp.get('nextToken')
+
+            # All services are loaded.
+            if not resp.get('nextToken'):
+                break
+
+    # Tasks under using.
+    service_task_definitions = []  # type: List[str]
+    for cluster, services in cluster_service_dict.items():
+        service_chunks = [service for service in _chunks(services, 10)]  # service names can have at most 10 items
+        for service_chunk in service_chunks:
+            resp = ecs_client.describe_services(cluster=cluster, services=service_chunk)
+            for service in resp['services']:
+                service_task_definitions.append(service['taskDefinition'])
+
+    return service_task_definitions
+
+
+def _chunks(l: list, n: int) -> Generator:
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+
 def clean_stale_tasks() -> None:
     """
-    Clean stale tasks. Leave only active revision.
+    Clean stale tasks. Leave only active tasks those are used by services.
     """
-    active_task_revisions = {}  # type: Dict[str, int]
+    service_task_definitions = _retrieve_service_task_definitions()
+
     all_task_definitions = []  # type: List[Dict[str, Any]]
     next_token = None
     while True:
@@ -33,28 +74,7 @@ def clean_stale_tasks() -> None:
         else:
             resp = ecs_client.list_task_definitions(status='ACTIVE', maxResults=100)
 
-        for task_definition_arn in resp['taskDefinitionArns']:
-            # Example arn:
-            # Old Style: 'arn:aws:ecs:eu-west-00000000:task-definition/task-foo:23'
-            # New Style: 'arn:aws:ecs:eu-west-00000000:task-definition/<cluster-name>/task-foo:23'
-            parts = task_definition_arn.split(':')
-            name = parts[-2].split('/')[1]
-            revision = int(parts[-1])
-            all_task_definitions.append(
-                {
-                    'name': name,
-                    'revision': revision,
-                }
-            )
-
-            # Initialize dict.
-            if active_task_revisions.get(name) is None:
-                active_task_revisions[name] = revision
-                continue
-
-            # Set the active revision.
-            if revision > active_task_revisions[name]:
-                active_task_revisions[name] = revision
+        all_task_definitions.extend(resp['taskDefinitionArns'])
 
         next_token = resp.get('nextToken')
 
@@ -63,24 +83,10 @@ def clean_stale_tasks() -> None:
             break
 
     for task_definition in all_task_definitions:
-        task_name = task_definition['name']
-        revision = task_definition['revision']
-        active_revision = active_task_revisions[task_name]
-
-        if revision == active_revision:
-            continue
-
-        if revision > active_revision:
-            logger.error('Active revision is not set correct! Active revision is set to %s for ',
-                         active_revision,
-                         task_name)
-            raise AeropressException()
-
-        stale_task_name = task_name + ':' + str(revision)
-        active_task_name = task_name + ':' + str(active_revision)
-        logger.info('Deregistering task definition %s. Active revision is %s', stale_task_name, active_task_name)
-        response = ecs_client.deregister_task_definition(taskDefinition=stale_task_name)
-        logger.debug('Deregistered stale task: %s', response)
+        if task_definition not in service_task_definitions:
+            logger.info('Deregistering task definition %s', task_definition)
+            response = ecs_client.deregister_task_definition(taskDefinition=task_definition)
+            logger.debug('Deregistered stale task: %s', response)
 
     logger.info('Cleaned all stale tasks.')
 
