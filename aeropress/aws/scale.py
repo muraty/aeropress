@@ -84,7 +84,7 @@ def _is_stale_policy(existing_policy_dict: dict, services: list) -> bool:
             if existing_policy_dict['ResourceId'] != resource_id:
                 continue
 
-            # PolicyName and ResouceId matches to one of defined policies.
+            # PolicyName and ResourceId matches to one of defined policies.
             return False
 
     return True
@@ -128,14 +128,14 @@ def _register_scalable_target(scale_dict: dict, resource_id: str) -> None:
 
 
 def _deregister_scalable_target(resource_id: str) -> None:
-    logger.info('Deregistering service as a scalable target: %s', resource_id)
     try:
         response = scaling_client.deregister_scalable_target(
                 ServiceNamespace='ecs',
                 ResourceId=resource_id,
                 ScalableDimension='ecs:service:DesiredCount',
         )
-        logger.debug('Deregistered service as a scalable target details: %s', response)
+        logger.info('Deregistered service as a scalable target: %s', resource_id)
+        logger.debug('Service deregistration response: %s', response)
     except ClientError as e:
         if e.response['Error']['Code'] == 'ObjectNotFoundException':
             logger.debug('No need to deregister..')

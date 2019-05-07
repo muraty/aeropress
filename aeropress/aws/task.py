@@ -20,7 +20,6 @@ def register_all(tasks: list, clean_stale: bool = False) -> None:
     _register_task_definitions(tasks)
 
 
-# TODO: DRY -> duplicate with get_existing_services
 def _retrieve_service_task_definitions() -> list:
     cluster_service_dict = defaultdict(list)  # type: Dict[str, List[str]]
 
