@@ -1,6 +1,9 @@
-import boto3
+import time
 from typing import List, Dict, Any, Generator  # noqa
 from collections import defaultdict
+
+import boto3
+from botocore.exceptions import ClientError
 
 from aeropress.aws.log import handle_logs
 from aeropress import logger
@@ -84,8 +87,22 @@ def clean_stale_tasks() -> None:
     for task_definition in all_task_definitions:
         if task_definition not in service_task_definitions:
             logger.info('Deregistering task definition %s', task_definition)
-            response = ecs_client.deregister_task_definition(taskDefinition=task_definition)
-            logger.debug('Deregistered stale task: %s', response)
+            slept = 0
+            while True:
+                try:
+                    response = ecs_client.deregister_task_definition(taskDefinition=task_definition)
+                    logger.debug('Deregistered stale task: %s', response)
+                except ClientError as e:
+                    if e.response['Error']['Code'] == 'ThrottlingException':
+                        logger.info('Request is throttled. Waiting...')
+                        time.sleep(5)
+                        slept += 5
+                else:
+                    break
+
+                # Give up trying after 20 seconds.
+                if slept >= 20:
+                    break
 
     logger.info('Cleaned all stale tasks.')
 
