@@ -122,6 +122,7 @@ def _register_task_definitions(tasks: list) -> None:
                 'environment': container_definition.get('environment', []),
                 'portMappings': container_definition.get('portMappings', []),
                 'ulimits': container_definition.get('ulimits', []),
+                'mountPoints': container_definition.get('mountPoints', []),
             })
 
         logger.info('Creating task definition: %s', task_dict['family'])
@@ -132,6 +133,7 @@ def _register_task_definitions(tasks: list) -> None:
             networkMode=task_dict['networkMode'],
             containerDefinitions=container_definitions,
             requiresCompatibilities=task_dict['requiresCompatibilities'],
+            volumes=task_dict.get('volumes', []),
         )
         logger.debug('Created task definition details: %s', response)
 
