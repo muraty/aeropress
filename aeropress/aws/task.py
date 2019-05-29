@@ -123,6 +123,7 @@ def _register_task_definitions(tasks: list) -> None:
                 'portMappings': container_definition.get('portMappings', []),
                 'ulimits': container_definition.get('ulimits', []),
                 'mountPoints': container_definition.get('mountPoints', []),
+                'links': container_definition.get('links', []),
             })
 
         logger.info('Creating task definition: %s', task_dict['family'])
