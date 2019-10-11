@@ -1,5 +1,6 @@
 import os
 import yaml
+import json
 import logging
 import argparse
 from pathlib import Path
@@ -28,6 +29,10 @@ def main() -> None:
                                dest='deploy_image_url',
                                default=None,
                                help='Image URL for docker image.')
+    parser_deploy.add_argument('--environment',
+                                type=str,
+                                dest='environment',
+                                help='Container environment.')
     parser_deploy.add_argument('--service-names',
                                nargs='+',
                                dest='deploy_service_names',
@@ -109,7 +114,7 @@ def main() -> None:
             return
 
     if args.subparser_name == 'deploy':
-        services = _load_config(config_path, args.deploy_image_url)
+        services = _load_config(config_path, args.deploy_image_url, environment=args.environment)
         logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.config_path)
         deploy(services, args.deploy_service_names)
         return
@@ -132,7 +137,7 @@ def main() -> None:
         return
 
 
-def _load_config(root_path: Path, image_url: str = None, entrypoint: list = []) -> list:
+def _load_config(root_path: Path, image_url: str = None, entrypoint: list = [], environment: str = None) -> list:
     logger.info('Reading yaml config files from %s', root_path)
 
     services = []  # type: List[Dict[str, Any]]
@@ -157,6 +162,10 @@ def _load_config(root_path: Path, image_url: str = None, entrypoint: list = []) 
 
                         if entrypoint:
                             container_definition['entryPoint'] = entrypoint
+
+                        if environment:
+                            # Environment must be in format of ... '[{"name": "foo", "value": "bar"}]'
+                            container_definition['environment'] = json.loads(environment)
 
                 services.append(value)
 
