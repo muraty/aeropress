@@ -115,7 +115,11 @@ def main() -> None:
 
     if args.subparser_name == 'deploy':
         services = _load_config(config_path, args.deploy_image_url, environment=args.environment)
-        logger.info("Deploying the image '%s' from path: %s", args.deploy_image_url, args.config_path)
+        logger.info('Reading config from path %s', args.config_path)
+
+        if args.deploy_image_url:
+            logger.info("Deploying image '%s'", args.deploy_image_url)
+
         deploy(services, args.deploy_service_names)
         return
 
