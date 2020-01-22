@@ -128,7 +128,7 @@ def main() -> None:
 
         task_dict = None
         for service_dict in services:
-            if args.task_definition == service_dict['task']['family']:
+            if args.task_definition == service_dict.get('task', {}).get('family'):
                 task_dict = service_dict['task']
                 break
 
@@ -192,6 +192,9 @@ def _is_valid_config(services: list) -> bool:
         if not service_dict.get('taskDefinition'):
             continue
 
+        if 'task' not in service_dict:
+            continue
+
         if service_dict['taskDefinition'] != service_dict['task']['family']:
             logger.error('Task definition is not found for service %s!', service_dict['serviceName'])
             return False
@@ -222,8 +225,10 @@ def deploy(services: list, service_names: list) -> None:
         selected_services.append(service_dict)
 
     # Register task definitions.
-    tasks = [selected_service['task'] for selected_service in selected_services]
-    task.register_all(tasks)
+    tasks = [selected_service.get('task') for selected_service in selected_services]
+    tasks = list(filter(None, tasks))
+    if tasks:
+        task.register_all(tasks)
 
     # Update or create all services. (We might have tasks without services, eliminating them..)
     filtered_selected_services = [sd for sd in selected_services if sd.get('serviceName')]
