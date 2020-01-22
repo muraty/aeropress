@@ -12,6 +12,7 @@ setup(
     python_requires='>=3.5.2',
     install_requires=[
         'boto3>=1.9',
+        'PyYAML>=5',
     ],
     include_package_data=True,
     license='BSD License',
