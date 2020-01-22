@@ -151,7 +151,7 @@ def _load_config(root_path: Path, image_url: str = None, entrypoint: list = [], 
         for name in files:
             path = Path(os.path.join(root, name))
             with open(path.as_posix()) as f:
-                _yaml_dict = yaml.load(f.read())
+                _yaml_dict = yaml.safe_load(f.read())
 
             for key, value in _yaml_dict.items():
                 # Handle service defnitions.
