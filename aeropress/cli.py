@@ -3,6 +3,7 @@ import yaml
 import json
 import logging
 import argparse
+from time import time
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
@@ -120,7 +121,26 @@ def main() -> None:
         if args.deploy_image_url:
             logger.info("Deploying image '%s'", args.deploy_image_url)
 
-        deploy(services, args.deploy_service_names)
+        sleep_time = 2
+        max_retry_count = 5
+        retry_count = 0
+        while True:
+            try:
+                deploy(services, args.deploy_service_names)
+            except botocore.exceptions.ClientError as e:
+                if "Rate exceeded" not in err.args[0]:
+                    raise
+
+                if retry_count >= max_retry_count:
+                    raise
+
+                logger.error('Rate limit exceeded. Sleeping for %s seconds...' % sleep_time)
+
+                time.sleep(sleep_time)
+                sleep_time *= 2
+                retry_count += 1
+            else:
+                break
         return
 
     if args.subparser_name == 'register':
