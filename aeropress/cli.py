@@ -7,6 +7,8 @@ from time import time
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
+import botocore
+
 from aeropress import logger
 from aeropress import AeropressException
 from aeropress.aws import task, service, log
