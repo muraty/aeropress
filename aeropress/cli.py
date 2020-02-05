@@ -130,7 +130,7 @@ def main() -> None:
             try:
                 deploy(services, args.deploy_service_names)
             except botocore.exceptions.ClientError as e:
-                if "Rate exceeded" not in err.args[0]:
+                if "Rate exceeded" not in e.args[0]:
                     raise
 
                 if retry_count >= max_retry_count:
