@@ -119,6 +119,7 @@ def _register_task_definitions(tasks: list) -> None:
                 'memoryReservation': container_definition['memoryReservation'],
                 'cpu': container_definition.get('cpu', 0),
                 'entryPoint': container_definition.get('entryPoint', []),
+                'command': container_definition.get('command', []),
                 'environment': container_definition.get('environment', []),
                 'portMappings': container_definition.get('portMappings', []),
                 'ulimits': container_definition.get('ulimits', []),
