@@ -83,6 +83,12 @@ def main() -> None:
                                  default=[],
                                  nargs='+',
                                  help='Container entrypoint. Must be list of strings.')
+    parser_register.add_argument('--command',
+                                 type=str,
+                                 dest='command',
+                                 default=[],
+                                 nargs='+',
+                                 help='Container command. Must be list of strings.')
 
     # Main command
     parser.add_argument('--logging-level',
@@ -146,7 +152,7 @@ def main() -> None:
         return
 
     if args.subparser_name == 'register':
-        services = _load_config(config_path, args.image_url, args.entrypoint)
+        services = _load_config(config_path, args.image_url, args.entrypoint, args.command)
 
         task_dict = None
         for service_dict in services:
@@ -163,7 +169,8 @@ def main() -> None:
         return
 
 
-def _load_config(root_path: Path, image_url: str = None, entrypoint: list = [], environment: str = None) -> list:
+def _load_config(root_path: Path, image_url: str = None,
+        entrypoint: list = [], command: list = [], environment: str = None) -> list:
     logger.info('Reading yaml config files from %s', root_path)
 
     services = []  # type: List[Dict[str, Any]]
@@ -188,6 +195,9 @@ def _load_config(root_path: Path, image_url: str = None, entrypoint: list = [], 
 
                         if entrypoint:
                             container_definition['entryPoint'] = entrypoint
+
+                        if command:
+                            container_definition['command'] = command
 
                         if environment:
                             # Environment must be in format of ... '[{"name": "foo", "value": "bar"}]'
