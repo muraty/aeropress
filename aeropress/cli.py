@@ -3,7 +3,7 @@ import yaml
 import json
 import logging
 import argparse
-from time import time
+from time import sleep
 from pathlib import Path
 from typing import List, Dict, Any  # noqa
 
@@ -144,7 +144,7 @@ def main() -> None:
 
                 logger.error('Rate limit exceeded. Sleeping for %s seconds...' % sleep_time)
 
-                time.sleep(sleep_time)
+                sleep(sleep_time)
                 sleep_time *= 2
                 retry_count += 1
             else:
