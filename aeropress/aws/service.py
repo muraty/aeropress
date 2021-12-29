@@ -99,6 +99,7 @@ def _update_services(services: list) -> None:
             desiredCount=service_dict['desiredCount'],
             taskDefinition=service_dict['taskDefinition'],
             deploymentConfiguration=service_dict.get('deploymentConfiguration', {}),
+            placementStrategy=service_dict.get('placementStrategy', []),
             forceNewDeployment=True,
         )
         logger.debug('Updated service details: %s', response)
