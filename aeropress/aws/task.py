@@ -112,12 +112,11 @@ def _register_task_definitions(tasks: list) -> None:
         # Create container definitions.
         container_definitions = []
         for container_definition in task_dict['containerDefinitions']:
-            container_definitions.append({
+            d = {
                 'name': container_definition['name'],
                 'image': container_definition['image'],
                 'logConfiguration': container_definition['logConfiguration'],
                 'memoryReservation': container_definition['memoryReservation'],
-                'memory': container_definition.get('memory'),
                 'cpu': container_definition.get('cpu', 0),
                 'entryPoint': container_definition.get('entryPoint', []),
                 'command': container_definition.get('command', []),
@@ -126,7 +125,15 @@ def _register_task_definitions(tasks: list) -> None:
                 'ulimits': container_definition.get('ulimits', []),
                 'mountPoints': container_definition.get('mountPoints', []),
                 'links': container_definition.get('links', []),
-            })
+            }
+            if container_definition.get('memory'):
+                if container_definition['memory'] < container_definition['memoryReservation']:
+                    logger.error('memory must be equal or bigger than memoryReservation')
+                    raise AeropressException()
+
+                d['memory'] = container_definition['memory']
+
+            container_definitions.append(d)
 
         logger.info('Creating task definition: %s', task_dict['family'])
         response = ecs_client.register_task_definition(
