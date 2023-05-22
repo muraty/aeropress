@@ -11,7 +11,7 @@ setup(
     packages=find_packages(),
     python_requires='>=3.5.2',
     install_requires=[
-        'boto3>=1.9',
+        'boto3>=1.26.137',
         'PyYAML>=5',
     ],
     include_package_data=True,
