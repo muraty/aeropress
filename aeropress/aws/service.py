@@ -72,14 +72,15 @@ def _create_missing_services(services: list) -> None:
             'cluster': service_dict['cluster'],
             'serviceName': service_dict['serviceName'],
             'taskDefinition': service_dict['taskDefinition'],
+            'loadBalancers': service_dict.get('loadBalancers', []),
             'desiredCount': service_dict['desiredCount'],
             'launchType': service_dict['launchType'],
             'schedulingStrategy': service_dict['schedulingStrategy'],
             'deploymentController': service_dict['deploymentController'],
-            'loadBalancers': service_dict.get('loadBalancers', []),
             'placementConstraints': service_dict.get('placementConstraints', []),
             'placementStrategy': service_dict.get('placementStrategy', []),
             'deploymentConfiguration': service_dict.get('deploymentConfiguration', {}),
+            'serviceConnectConfiguration': service_dict.get('serviceConnectConfiguration', {}),
         }
         if service_dict.get('healthCheckGracePeriodSeconds'):
             params['healthCheckGracePeriodSeconds'] = service_dict.get('healthCheckGracePeriodSeconds')
