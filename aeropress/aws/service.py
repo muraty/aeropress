@@ -80,7 +80,7 @@ def _create_missing_services(services: list) -> None:
             'placementConstraints': service_dict.get('placementConstraints', []),
             'placementStrategy': service_dict.get('placementStrategy', []),
             'deploymentConfiguration': service_dict.get('deploymentConfiguration', {}),
-            'serviceConnectConfiguration': service_dict.get('serviceConnectConfiguration', {}),
+            'serviceConnectConfiguration': service_dict.get('serviceConnectConfiguration', {'enabled': False}),
         }
         if service_dict.get('healthCheckGracePeriodSeconds'):
             params['healthCheckGracePeriodSeconds'] = service_dict.get('healthCheckGracePeriodSeconds')
