@@ -144,6 +144,7 @@ def _register_task_definitions(tasks: list) -> None:
             containerDefinitions=container_definitions,
             requiresCompatibilities=task_dict['requiresCompatibilities'],
             volumes=task_dict.get('volumes', []),
+            tags=task_dict.get('tags', []),
         )
         logger.debug('Created task definition details: %s', response)
 

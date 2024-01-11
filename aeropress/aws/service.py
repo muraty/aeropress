@@ -81,6 +81,8 @@ def _create_missing_services(services: list) -> None:
             'placementStrategy': service_dict.get('placementStrategy', []),
             'deploymentConfiguration': service_dict.get('deploymentConfiguration', {}),
             'serviceConnectConfiguration': service_dict.get('serviceConnectConfiguration', {'enabled': False}),
+            'propagateTags': service_dict.get('propagateTags', 'NONE'),
+            'tags': service_dict.get('tags', []),
         }
         if service_dict.get('healthCheckGracePeriodSeconds'):
             params['healthCheckGracePeriodSeconds'] = service_dict.get('healthCheckGracePeriodSeconds')
@@ -101,6 +103,7 @@ def _update_services(services: list) -> None:
             taskDefinition=service_dict['taskDefinition'],
             deploymentConfiguration=service_dict.get('deploymentConfiguration', {}),
             placementStrategy=service_dict.get('placementStrategy', []),
+            propagateTags=service_dict.get('propagateTags', 'NONE'),
             forceNewDeployment=True,
         )
         logger.debug('Updated service details: %s', response)
