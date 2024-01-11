@@ -136,16 +136,20 @@ def _register_task_definitions(tasks: list) -> None:
             container_definitions.append(d)
 
         logger.info('Creating task definition: %s', task_dict['family'])
-        response = ecs_client.register_task_definition(
-            family=task_dict['family'],
-            taskRoleArn=task_dict['taskRoleArn'],
-            executionRoleArn=task_dict['executionRoleArn'],
-            networkMode=task_dict['networkMode'],
-            containerDefinitions=container_definitions,
-            requiresCompatibilities=task_dict['requiresCompatibilities'],
-            volumes=task_dict.get('volumes', []),
-            tags=task_dict.get('tags', []),
-        )
+
+        params = {
+            'family': task_dict['family'],
+            'taskRoleArn': task_dict['taskRoleArn'],
+            'executionRoleArn': task_dict['executionRoleArn'],
+            'networkMode': task_dict['networkMode'],
+            'containerDefinitions': container_definitions,
+            'requiresCompatibilities': task_dict['requiresCompatibilities'],
+            'volumes': task_dict.get('volumes', []),
+        }
+        if task_dict.get('tags'):
+            params['tags'] = task_dict.get('tags')
+
+        response = ecs_client.register_task_definition(**params)
         logger.debug('Created task definition details: %s', response)
 
 

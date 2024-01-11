@@ -82,8 +82,9 @@ def _create_missing_services(services: list) -> None:
             'deploymentConfiguration': service_dict.get('deploymentConfiguration', {}),
             'serviceConnectConfiguration': service_dict.get('serviceConnectConfiguration', {'enabled': False}),
             'propagateTags': service_dict.get('propagateTags', 'NONE'),
-            'tags': service_dict.get('tags', []),
         }
+        if service_dict.get('tags'):
+            params['tags'] = service_dict.get('tags')
         if service_dict.get('healthCheckGracePeriodSeconds'):
             params['healthCheckGracePeriodSeconds'] = service_dict.get('healthCheckGracePeriodSeconds')
 
